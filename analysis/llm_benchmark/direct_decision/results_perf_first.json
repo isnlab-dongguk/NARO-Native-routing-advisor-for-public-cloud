@@ -1,0 +1,122 @@
+[
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides native pod routing without encapsulation and uses per-node BGP peering with Cloud Router, allowing on-premises systems to reach pod IPs directly. It best matches the network team\u2019s requirement to own routing control and prioritizes performance over the operational and infrastructure cost of maintaining many BGP sessions.",
+  "cond": "no_facts",
+  "run": 0
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides non-encapsulated pod reachability through per-node BGP advertisements, allowing on-premises systems to access pod IPs directly and letting the network team retain routing-control ownership. It also avoids overlay overhead and scales better operationally than managing large sets of static VPC routes for a 200-node, performance-sensitive cluster.",
+  "cond": "no_facts",
+  "run": 1
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides non-encapsulated pod networking with per-node BGP peering, allowing the on-premises network to learn pod routes directly and retain end-to-end routing control. It is better suited than static route updates for a 200-node, highly dynamic Spot fleet, while avoiding the platform mismatch of GKE alias-IP routing.",
+  "cond": "no_facts",
+  "run": 2
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "Per-node BGP peering with Cloud Router provides native, non-encapsulated pod reachability and lets the network team operate the routing control plane end to end. It offers better performance than VXLAN and avoids manually managing large sets of static VPC routes as the 200-node Spot cluster scales and changes.",
+  "cond": "no_facts",
+  "run": 3
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "Per-node BGP peering provides native, non-encapsulated pod reachability and lets the network team retain end-to-end routing control, including advertising pod CIDRs to on-premises systems. It also avoids the per-node static-route management burden and preserves better performance than an overlay for a 200-node workload.",
+  "cond": "no_facts",
+  "run": 4
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "Per-node BGP peering with Cloud Router provides direct, non-encapsulated pod reachability and lets the network team retain end-to-end routing control. It avoids overlay performance overhead and scales more appropriately than managing large sets of static VPC routes for a 200-node, performance-sensitive workload.",
+  "cond": "no_facts",
+  "run": 5
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides native pod routing without encapsulation and uses per-node BGP peering with Cloud Router, allowing on-premises systems to reach pod IPs directly. It fits the self-managed kubeadm requirement and gives the network team end-to-end routing control with better performance and scalability than static route updates.",
+  "cond": "no_facts",
+  "run": 6
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "Per-node BGP peering with Cloud Router provides direct, non-encapsulated pod reachability to on-premises networks while giving the network team end-to-end control of route exchange. It avoids the scaling and operational burden of static per-node VPC routes and is better suited to a 200-node, performance-sensitive cluster.",
+  "cond": "no_facts",
+  "run": 7
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "Per-node BGP peering with Cloud Router provides native, non-encapsulated pod reachability and lets the network team control routing end to end, including on-premises advertisement. It avoids overlay performance costs and is more operationally responsive than managing large numbers of static VPC routes, though Cloud Router peer and route-scale limits must be designed for 200 nodes.",
+  "cond": "no_facts",
+  "run": 8
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides non-encapsulated native pod routing with per-node BGP advertisements, allowing on-premises systems to reach pod IPs directly. It aligns with the network team\u2019s requirement to own the routing control plane and prioritizes performance over the operational cost of managing many BGP sessions.",
+  "cond": "no_facts",
+  "run": 9
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides unencapsulated pod networking with per-node BGP, allowing on-premises systems to reach pod IPs directly while preserving end-to-end routing control for the network team. It matches the highest-throughput options and automatically withdraws routes when nodes fail, despite its higher monthly fee and greater operational effort.",
+  "cond": "with_facts",
+  "run": 0
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct pod-IP routing without encapsulation and lets the network team own BGP end to end, while delivering the highest measured throughput alongside automatic route withdrawal on node loss. Its higher routing fee and operational effort are justified because performance and routing control outweigh cost for this deployment.",
+  "cond": "with_facts",
+  "run": 1
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct pod-IP routing with per-node BGP, automatic withdrawal on ungraceful node loss, and the highest measured throughput (9.74 Gbps), satisfying the encapsulation and network-control requirements. Its higher operational effort and monthly routing fee are justified because performance and routing ownership take priority over cost.",
+  "cond": "with_facts",
+  "run": 2
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct pod-IP routing without encapsulation and lets the network team own routing through per-node BGP peering, while automatically withdrawing routes when nodes disappear. It matches the self-managed kubeadm requirement and delivers the measured 9.74 Gbps throughput, despite higher operational effort and monthly routing cost.",
+  "cond": "with_facts",
+  "run": 3
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides non-encapsulated pod networking with per-node BGP peering, allowing on-premises systems to reach pod IPs directly while giving the network team end-to-end routing control. It matches the highest-throughput options and automatically withdraws routes when nodes fail; its higher operational effort and monthly fee are acceptable given the performance priority.",
+  "cond": "with_facts",
+  "run": 4
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct pod-IP routing without encapsulation and uses per-node BGP, satisfying the on-premises reachability and network-team ownership requirements while matching the highest measured throughput. Although it has higher operational effort and monthly cost, it avoids static-route staleness and is the appropriate tradeoff for this performance- and control-plane-sensitive deployment.",
+  "cond": "with_facts",
+  "run": 5
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct, non-encapsulated pod reachability with per-node BGP, matching the requirement for the network team to own routing control and ensuring automatic route withdrawal when nodes disappear. It delivers the top measured throughput (9.74 Gbps) and avoids stale routes, while its higher routing fee and operational effort are acceptable given that performance and control outweigh cost.",
+  "cond": "with_facts",
+  "run": 6
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic preserves direct pod-IP reachability without encapsulation and lets the network team control routing through per-node BGP, while delivering the top measured throughput of 9.74 Gbps. Although it has the highest operational effort and monthly routing fee, its 250-prefix quota supports 200 nodes and BGP automatically withdraws routes when nodes fail.",
+  "cond": "with_facts",
+  "run": 7
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides direct pod reachability without encapsulation and uses per-node BGP, allowing the network team to own routing and automatically withdraw routes when Spot nodes disappear. It also delivers the highest measured throughput alongside N-Cloud, while avoiding N-Cloud\u2019s GKE dependency; its higher routing fee and operational effort are justified because performance and routing control take priority.",
+  "cond": "with_facts",
+  "run": 8
+ },
+ {
+  "choice": "N-Dynamic",
+  "rationale": "N-Dynamic provides native pod-IP routing with per-node BGP peering, satisfying the prohibition on encapsulation and giving the network team end-to-end routing control with automatic withdrawal on node loss. It matches the highest-throughput options and avoids the stale-route risk of N-Static, while its higher operational effort and monthly cost are justified by the stated performance and control priorities.",
+  "cond": "with_facts",
+  "run": 9
+ }
+]

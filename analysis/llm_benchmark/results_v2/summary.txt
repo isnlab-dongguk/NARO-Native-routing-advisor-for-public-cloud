@@ -1,0 +1,29 @@
+
+=== schema ===
+specified runs: 135; exact-vector: 126 (93.3%); parse errors: 0; spurious clarifications: 0
+clarification runs: 15; correctly clarified: 15
+repeat-inconsistent scenarios: none
+errors by field: {'stated_priority': 6, 'control_capability_required': 3}
+  S02#0: stated_priority: want='cost_first' got='unspecified'
+  S02#1: stated_priority: want='cost_first' got='unspecified'
+  S02#2: stated_priority: want='cost_first' got='unspecified'
+  S05#0: control_capability_required: want=False got=True
+  S05#2: control_capability_required: want=False got=True
+  S05#1: control_capability_required: want=False got=True
+  S12#0: stated_priority: want='cost_first' got='unspecified'
+  S12#1: stated_priority: want='cost_first' got='unspecified'
+  S12#2: stated_priority: want='cost_first' got='unspecified'
+
+=== freeform ===
+specified runs: 45; exact-vector: 36 (80.0%); parse errors: 0; spurious clarifications: 0
+clarification runs: 5; correctly clarified: 5
+errors by field: {'self_managed_required': 7, 'stated_priority': 2, 'scale': 1}
+  S01#0: self_managed_required: want=True got=False
+  S02#0: self_managed_required: want=True got=False
+  S09#0: stated_priority: want='perf_first' got='unspecified'
+  S08#0: stated_priority: want='cost_first' got='unspecified'
+  S12#0: scale: want=150 got=40; self_managed_required: want=True got=False
+  S15#0: self_managed_required: want=True got=False
+  S23#0: self_managed_required: want=True got=False
+  S39#0: self_managed_required: want=True got=False
+  N41#0: self_managed_required: want=True got=False

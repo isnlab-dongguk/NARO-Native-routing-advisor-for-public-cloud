@@ -1,0 +1,11 @@
+# Figure 4 data: route convergence time (seconds), mean of 3 runs per scenario.
+# T0 = initiation of the final mechanism-specific route-registration step;
+# T2 = first successful TCP response from a pod on the new node.
+# Figure 4 plots the 50-pods-per-node scenarios only (4node_50p, 8node_50p);
+# the 1-pod scenarios are measured but not plotted.
+# Source: routing_convergence.xlsx; N-Cloud 50-pod values = real GKE re-run
+# (2026-07-30; 1-pod scenarios not re-measured, alias-IP values retained).
+config,scenario_4node_1pod_s,scenario_4node_50pod_s,scenario_8node_1pod_s,scenario_8node_50pod_s,average_s
+N-Static,14.486,16.202,15.347,16.519,15.638
+N-Dynamic,9.245,10.388,8.989,10.456,9.769
+N-Cloud,4.383,5.104,4.502,5.225,-

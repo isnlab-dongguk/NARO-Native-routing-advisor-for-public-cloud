@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NARA — Native Routing Advisor</title>
+  <link rel="stylesheet" href="/static/style.css?v=4" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">NARA</span>
+        <span class="tagline">Native Routing Advisor for Public Cloud Kubernetes</span>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <span class="theme-icon" id="theme-icon">☀️</span>
+        <span class="theme-label" id="theme-label">Light</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Input panel 1: structured form (baseline preferences + operator profile) -->
+    <section class="panel input-panel">
+      <h3>Baseline preferences &amp; operator profile</h3>
+
+      <div class="form-group">
+        <label for="preset">Preference profile</label>
+        <select id="preset" name="preset">
+          <option value="cost_first">Cost-first — minimize spend</option>
+          <option value="balanced" selected>Balanced (default)</option>
+          <option value="perf_first">Performance-first</option>
+        </select>
+      </div>
+
+
+      <div class="form-group">
+        <label for="routing_expertise">Routing expertise</label>
+        <select id="routing_expertise" name="routing_expertise">
+          <option value="" selected>Unspecified</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="expert">Expert</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="budget_flexibility">Budget flexibility</label>
+        <select id="budget_flexibility" name="budget_flexibility">
+          <option value="" selected>Unspecified</option>
+          <option value="limited">Limited</option>
+          <option value="flexible">Flexible</option>
+        </select>
+      </div>
+
+      <details class="form-group">
+        <summary>Advanced: per-criterion importance overrides</summary>
+        <div id="criterion-priorities"></div>
+      </details>
+    </section>
+
+    <!-- Input panel 2: free-form deployment request -->
+    <section class="panel input-panel">
+      <h3>Deployment request (free-form, optional)</h3>
+      <div class="form-group">
+        <textarea
+          id="freeform-text"
+          name="freeform_text"
+          rows="10"
+          placeholder="e.g. We run a 200-node self-managed kubeadm cluster on Spot VMs. Encapsulation is prohibited. Our expert networking team wants direct control over routing policy. Performance over cost."
+        ></textarea>
+        <p class="hint">Mandatory constraints (target scale, transparency, self-managed Kubernetes,
+        budget limit, required routing-control capability) are stated here; an LLM extracts them
+        into the same schema and NARA merges both sources. Requires <code>GATEWAY_API_KEY</code>
+        on the server.</p>
+      </div>
+      <button type="button" id="submit-btn" class="btn-primary">Get Recommendation</button>
+    </section>
+
+    <!-- Results panel -->
+    <section class="panel results-panel" id="results" style="display:none;">
+      <div id="loading" class="loading" style="display:none;">
+        <div class="spinner"></div>
+        <p>Analyzing requirements…</p>
+      </div>
+
+      <div id="result-content" style="display:none;">
+        <div class="recommendation-header">
+          <div class="rec-badge" id="rec-badge"></div>
+          <div class="rec-info">
+            <h2 id="rec-name"></h2>
+            <p id="rec-desc"></p>
+          </div>
+        </div>
+
+        <div id="extracted-req-section" style="display:none;">
+          <h3>Extracted Requirements (free-form)</h3>
+          <div id="extracted-req" class="req-chips"></div>
+        </div>
+
+        <h3>Configuration Scores</h3>
+        <div class="scores-table-wrap">
+          <table class="scores-table" id="scores-table">
+            <thead>
+              <tr>
+                <th>Configuration</th>
+                <th>TOPSIS &phi;</th>
+              </tr>
+            </thead>
+            <tbody id="scores-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="weight-info" id="weight-info"></div>
+        <div class="unresolved-note" id="unresolved-info" style="display:none;"></div>
+      </div>
+
+      <div id="error-box" class="error-box" style="display:none;"></div>
+    </section>
+
+    <!-- Explanation panel -->
+    <section class="panel explanation-panel" id="explanation-panel" style="display:none;">
+      <h3>Recommendation Explanation</h3>
+      <div class="explanation-box" id="explanation-text"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js?v=4"></script>
+</body>
+</html>

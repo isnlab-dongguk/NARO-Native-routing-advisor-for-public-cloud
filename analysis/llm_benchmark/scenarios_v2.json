@@ -1,0 +1,776 @@
+{
+ "schema_version": 2,
+ "scenarios": [
+  {
+   "id": "S01",
+   "group": "case-study paraphrase",
+   "text": "We are a small startup running a 30-node kubeadm cluster on Google Cloud VMs. Standard pod networking is fine and we have no problem with a VXLAN overlay. Nobody on the team has touched BGP. Keeping the monthly bill low matters more than squeezing out extra throughput, and we would like routing to be as hands-off as possible.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 30,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S02",
+   "group": "case-study paraphrase",
+   "text": "Our payments platform runs 150 nodes with kubeadm on Compute Engine. Regulators require that pod IPs be directly visible to our on-premises audit systems, so encapsulation is not acceptable. One of our engineers has moderate BGP experience from a previous role. We want to keep managed-service spending minimal. We have no strong preference about who operates the routing layer.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 150,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "cost_first",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S03",
+   "group": "case-study paraphrase",
+   "text": "E-commerce platform, projected to reach 400 worker nodes. We need native pod routing because of MTU constraints toward our CDN. We are open to either GKE or a self-managed cluster. We would prefer the cloud provider to handle routing operations for us. The team is new to BGP. Throughput is the top priority even if it costs more.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 400,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "perf_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S04",
+   "group": "case-study paraphrase",
+   "text": "B2B SaaS backend, 120 nodes expected. Pod IP transparency to external load balancers is mandatory for us. Either GKE or our own cluster would work. Hands-off routing operation is preferred. There is some BGP experience on the team. Performance comes first.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 120,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "perf_first",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S05",
+   "group": "case-study paraphrase",
+   "text": "We run batch analytics on Spot VMs, around 230 nodes at peak, on a self-managed kubeadm cluster. Native routing is required. Our network team operates BGP daily and insists on owning the routing control plane end to end. Performance beats cost for this workload.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 230,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S06",
+   "group": "case-study paraphrase",
+   "text": "Same batch platform as before but capped at 200 Spot VM nodes, kubeadm-managed. Encapsulation is prohibited. The networking group are seasoned BGP operators and want direct control over routing policy. We optimize for performance rather than spend.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 200,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S07",
+   "group": "full-specified",
+   "text": "Game backend on GKE Standard with 80 nodes. We must avoid overlay encapsulation because of latency-sensitive UDP traffic and MTU headroom. We are happy to let Google manage the routing. Nobody here has BGP skills. We take a balanced view on cost versus performance.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 80,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S08",
+   "group": "full-specified",
+   "text": "Research lab with 48 GPU nodes on kubeadm. An overlay is acceptable for our traffic. One admin ran BGP at a previous job and is comfortable with it, though not at an expert operator level. We do not want to spend money on managed services, and we are neutral about who controls routing.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 48,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "cost_first",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S09",
+   "group": "full-specified",
+   "text": "Telco NFV workloads on 190 self-managed nodes. Packets must carry real pod IPs to interoperate with SR-IOV appliances, so no encapsulation of any kind. Our NOC runs BGP across the WAN and we require direct control over advertisements and timers. Cost is not a concern.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 190,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": true,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   },
+   "note": "'we require direct control over advertisements and timers' -> control capability stated as mandatory"
+  },
+  {
+   "id": "S10",
+   "group": "full-specified",
+   "text": "IoT telemetry ingestion on GKE, 25 nodes. Overlay networking is fine. We have a minimal ops team and want everything managed by the provider. We are new to routing. The cheapest setup is preferred.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 25,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S11",
+   "group": "full-specified",
+   "text": "Video streaming edge tier, between 80 and 120 worker nodes depending on the season, self-managed. Native routing is needed for client IP preservation. We are neutral on routing control, beginners at BGP, and weigh cost and performance about equally.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 120,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "balanced",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S12",
+   "group": "full-specified",
+   "text": "We currently run 40 nodes and expect to expand to 150 over the next year, kubeadm on Compute Engine. Encapsulation is prohibited by our interconnect design. We would rather not operate routing ourselves. No BGP background on the team, and we are cost-conscious.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 150,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S13",
+   "group": "full-specified",
+   "text": "About 4,500 pods spread over 90 worker nodes, self-managed. VXLAN is acceptable. We have intermediate BGP skills and want direct control of routing behavior for debugging purposes. Performance is the priority.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 90,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S14",
+   "group": "full-specified",
+   "text": "A bank's internal platform: 60 nodes, GKE only by corporate mandate. Native routing is required so pod traffic can pass security inspection unmodified. Provider-managed routing is preferred. We are beginners with BGP and balanced on cost versus performance.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 60,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "beginner"
+   },
+   "note": "GKE corporate mandate: v2 schema has no GKE-required field (rule removed from framework); self_managed_required=false"
+  },
+  {
+   "id": "S15",
+   "group": "full-specified",
+   "text": "CI build farm, 35 nodes, kubeadm. Overlay is fine, nobody on the team knows BGP, and we want the lowest possible cost. We do not particularly care who manages the routing.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 35,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S16",
+   "group": "full-specified",
+   "text": "HPC burst cluster of 500 nodes on GKE. Native routing is required because of MTU-sensitive collective communication. We want hands-off, provider-delegated routing. The team has no BGP experience. Performance first, cost second.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 500,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "perf_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S17",
+   "group": "full-specified",
+   "text": "A 12-node edge pilot, self-managed, where pods must be reachable from our on-premises network through Cloud VPN without NAT, so encapsulation is out. Our netops team are expert BGP operators and want to own routing. Minimizing spend is the top priority.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 12,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "cost_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S18",
+   "group": "full-specified",
+   "text": "Media transcoding pipeline, 75 nodes, and we do not mind whether it lands on GKE or a self-managed cluster. Overlay encapsulation is acceptable. The team has intermediate routing knowledge, no strong stance on who controls routing, and we balance cost against performance.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 75,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "balanced",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S19",
+   "group": "full-specified",
+   "text": "Adtech real-time bidding on GKE, 300 nodes. We need unencapsulated pod networking to keep per-packet overhead down. Routing operations should be delegated to the provider. Nobody has BGP experience. Latency and throughput trump cost.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 300,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "perf_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S20",
+   "group": "full-specified",
+   "text": "Logistics SaaS, 55 nodes, kubeadm. Pods must be addressable from partner VPCs without NAT, so no overlay. Several of us ran BGP at an ISP and we intend to own the routing control plane. We weigh cost and performance evenly.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 55,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "balanced",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S21",
+   "group": "full-specified",
+   "text": "Healthcare records platform on 140 nodes. Compliance forces us to stay on self-managed clusters. Native pod routing is required for traffic inspection. Where possible we still prefer routing operations to be delegated rather than run by us. We are BGP beginners and quite cost-sensitive.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 140,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S22",
+   "group": "full-specified",
+   "text": "MMO shard servers: 220 nodes at launch on a self-managed cluster. Native routing is a hard requirement. Our expert network team wants full BGP-level control of routing. Performance above everything else.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 220,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S23",
+   "group": "full-specified",
+   "text": "University teaching cluster, 16 nodes on Compute Engine with kubeadm. Overlay is fine for the workloads. We actually want to configure BGP by hand because the instructors are experts and it is part of the curriculum, so direct routing control is desired. It must be as cheap as possible.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 16,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "cost_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S24",
+   "group": "full-specified",
+   "text": "Retail analytics on GKE with 100 nodes. Encapsulation is fine. We prefer a fully managed routing setup, have no BGP experience, and hold a balanced position on cost versus performance.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 100,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S25",
+   "group": "full-specified",
+   "text": "We operate 210 self-managed nodes and native pod routing is mandatory for our interconnect. Despite running our own cluster, we would like routing operations delegated as much as possible. The team has intermediate BGP knowledge and we take a balanced view on spending.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 210,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S26",
+   "group": "full-specified",
+   "text": "Trading infrastructure, 45 nodes, GKE or self-managed both acceptable. Native routing is required for deterministic latency. Neutral about routing control, intermediate BGP skills, performance first.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 45,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "perf_first",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S27",
+   "group": "full-specified",
+   "text": "Spark on Kubernetes, 260 nodes, self-managed. Overlay networking is OK for shuffle traffic. We are routing beginners, want the routing layer to be as hands-off as possible, and primarily optimize for cost.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 260,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S28",
+   "group": "full-specified",
+   "text": "We run 70 nodes on GKE Standard. External firewalls must see pod source IPs without SNAT or encapsulation. Our SRE team could handle BGP if pressed but would rather Google run the routing. Cost and performance are weighted equally.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 70,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S29",
+   "group": "full-specified",
+   "text": "Fraud-detection pipeline expected at 175 nodes; GKE or self-managed both fine. Unencapsulated pod routing is required by the packet-capture tooling. No stance on routing control. The team is new to BGP. Performance is the priority.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 175,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "perf_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S30",
+   "group": "full-specified",
+   "text": "Just a dev and test sandbox: 8 nodes on GKE, overlay fine, hands-off routing please, no BGP knowledge, keep it cheap.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 8,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   }
+  },
+  {
+   "id": "S31",
+   "group": "full-specified",
+   "text": "SaaS analytics platform scaling up to 240 nodes on self-managed infrastructure. Native routing is required. Our platform team is comfortable operating BGP in production and wants control of the routing plane. Cost matters most to us.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 240,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "cost_first",
+    "routing_expertise": "expert"
+   }
+  },
+  {
+   "id": "S32",
+   "group": "full-specified",
+   "text": "Streaming ingest on GKE, 320 nodes. No encapsulation because of MTU constraints toward upstream sources. Routing should be delegated to the provider. Intermediate BGP knowledge on the team. Balanced priorities overall.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 320,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "balanced",
+    "routing_expertise": "intermediate"
+   }
+  },
+  {
+   "id": "S33",
+   "group": "missing-scale",
+   "text": "We are building a Kubernetes platform on GKE for internal developer tools. Native pod routing is required by our network security policy. We want hands-off, provider-managed routing, have no BGP experience, and cost is the first concern.",
+   "expect_clarification": true,
+   "truth": {}
+  },
+  {
+   "id": "S34",
+   "group": "missing-scale",
+   "text": "kubeadm cluster on Compute Engine. Overlay encapsulation is prohibited. Our BGP-expert network team wants direct control of routing. Performance first.",
+   "expect_clarification": true,
+   "truth": {}
+  },
+  {
+   "id": "S35",
+   "group": "missing-scale",
+   "text": "Each of our services handles about 10,000 requests per second and we deploy roughly 300 microservices in total. Native routing is needed, we are on GKE, we want routing managed for us, we are beginners, and we take a balanced view on cost.",
+   "expect_clarification": true,
+   "truth": {}
+  },
+  {
+   "id": "S36",
+   "group": "missing-scale",
+   "text": "We are migrating our platform from EKS to Google Cloud onto self-managed clusters. Encapsulation is not allowed by the interconnect design. Intermediate BGP experience. We are cost-sensitive.",
+   "expect_clarification": true,
+   "truth": {}
+  },
+  {
+   "id": "S37",
+   "group": "default-field",
+   "text": "A 50-node self-managed cluster where native routing is required and we want direct control over routing policy. Performance is the priority.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 50,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "unspecified"
+   },
+   "note": "expertise unstated -> unspecified"
+  },
+  {
+   "id": "S38",
+   "group": "default-field",
+   "text": "90 nodes on GKE. An overlay is fine for us. We prefer provider-managed routing and have no BGP experience.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 90,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "unspecified",
+    "routing_expertise": "beginner"
+   },
+   "note": "priority unstated -> unspecified"
+  },
+  {
+   "id": "S39",
+   "group": "default-field",
+   "text": "A 110-node kubeadm cluster that requires native pod routing. The team has intermediate BGP experience. Cost is the deciding factor.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 110,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "unspecified",
+    "stated_priority": "cost_first",
+    "routing_expertise": "intermediate"
+   },
+   "note": "control direction unstated -> unspecified"
+  },
+  {
+   "id": "S40",
+   "group": "default-field",
+   "text": "We expect around 65 worker nodes. The team has no routing background, we want to minimize cost, and we would prefer not to operate routing ourselves.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 65,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   },
+   "note": "native_required and infra unstated -> false / any"
+  },
+  {
+   "id": "N41",
+   "group": "budget",
+   "text": "Fintech transaction-scoring cluster, 40 nodes on self-managed kubeadm. Encapsulation is prohibited by our audit interconnect. Finance has set a hard cap of 60 dollars per month on recurring routing-service fees; anything above that is rejected. Neutral on who operates routing, one engineer has intermediate BGP experience, and beyond the cap we generally optimize for cost.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 40,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": 60,
+    "control_capability_required": false,
+    "control_direction": "neutral",
+    "stated_priority": "cost_first",
+    "routing_expertise": "intermediate"
+   },
+   "note": "strict budget stated as hard cap"
+  },
+  {
+   "id": "N42",
+   "group": "budget",
+   "text": "We run about 90 worker nodes and spend roughly 12,000 dollars a month on VMs and storage, which is fine. For the routing layer itself, however, management insists that recurring service fees stay strictly under 70 dollars per month. Native pod routing is required for our packet brokers. GKE or self-managed both work. No BGP background, provider-delegated routing preferred, performance otherwise prioritized.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 90,
+    "transparency_required": true,
+    "self_managed_required": false,
+    "budget_limit_usd": 70,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "perf_first",
+    "routing_expertise": "beginner"
+   },
+   "note": "$12,000 VM spend is a distractor; routing budget is $70"
+  },
+  {
+   "id": "N43",
+   "group": "budget-soft",
+   "text": "Internal tooling cluster, 60 self-managed nodes, overlay encapsulation is acceptable. We would like to keep routing service fees under 100 dollars a month if possible, but it is not a hard limit. Nobody runs BGP here. Delegated routing preferred, and cost matters most overall.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 60,
+    "transparency_required": false,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   },
+   "note": "soft budget wish, NOT a strict limit -> budget_limit_usd must stay null"
+  },
+  {
+   "id": "N44",
+   "group": "budget-missing-scale",
+   "text": "kubeadm on Compute Engine. Encapsulation is prohibited. Our strict monthly budget for routing services is 80 dollars. Expert BGP team that wants direct control. Performance first.",
+   "expect_clarification": true,
+   "truth": {},
+   "note": "strict budget stated but cluster scale missing -> clarification required to evaluate the budget"
+  },
+  {
+   "id": "N45",
+   "group": "control-capability",
+   "text": "Real-time risk platform, 130 self-managed nodes, native pod routing required. During incident response we must be able to withdraw a node's routes ourselves within seconds; that ability is a hard operational requirement, not a preference. Expert BGP operators, direct control preferred, performance first.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 130,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": true,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   },
+   "note": "route withdrawal stated as mandatory capability"
+  },
+  {
+   "id": "N46",
+   "group": "control-capability",
+   "text": "Our platform team is only two people and we would prefer routing to be as managed as possible. However, our security policy requires that we can directly control route registration to quarantine compromised nodes; that capability is non-negotiable. 85 worker nodes, GKE or self-managed both acceptable, overlay is fine, no BGP experience, cost-sensitive.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 85,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": true,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   },
+   "note": "mandatory control capability combined with a delegated preference"
+  },
+  {
+   "id": "N47",
+   "group": "minimal",
+   "text": "We need a recommendation for a 100-node Kubernetes cluster on Google Cloud. Keep it cheap.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 100,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "unspecified",
+    "stated_priority": "cost_first",
+    "routing_expertise": "unspecified"
+   },
+   "note": "nearly everything unspecified"
+  },
+  {
+   "id": "N48",
+   "group": "distractor",
+   "text": "We currently pay the 73 dollars per month GKE management fee and are evaluating whether a self-managed alternative would suit us better. Around 20 worker nodes. No strict budget has been set, we simply want the lowest-cost option. Overlay is fine. We are new to routing and happy to delegate it.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 20,
+    "transparency_required": false,
+    "self_managed_required": false,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "delegated",
+    "stated_priority": "cost_first",
+    "routing_expertise": "beginner"
+   },
+   "note": "$73 mention is existing spend, not a budget limit"
+  },
+  {
+   "id": "N49",
+   "group": "transparency-phrasing",
+   "text": "Our intrusion-detection system must observe the original pod source addresses directly on the VPC fabric; any tunneling that hides them is unacceptable. 160 nodes, self-managed by policy. Expert network team that wants to run routing itself. Performance over cost.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 160,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": null,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   },
+   "note": "transparency phrased without the word encapsulation"
+  },
+  {
+   "id": "N50",
+   "group": "budget",
+   "text": "Batch rendering cluster: 48 self-managed nodes, encapsulation prohibited, and a strict routing-services budget of 200 dollars per month. The team prefers direct control of routing, has expert BGP experience, and prioritizes performance within the budget.",
+   "expect_clarification": false,
+   "truth": {
+    "scale": 48,
+    "transparency_required": true,
+    "self_managed_required": true,
+    "budget_limit_usd": 200,
+    "control_capability_required": false,
+    "control_direction": "direct",
+    "stated_priority": "perf_first",
+    "routing_expertise": "expert"
+   },
+   "note": "budget that binds against per-node routing fees at this scale"
+  }
+ ]
+}

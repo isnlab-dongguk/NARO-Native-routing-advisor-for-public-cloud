@@ -1,0 +1,13 @@
+"# Node provisioning time (seconds), mean of 3 repetitions; SD columns for Prism mean±SD±n entry (n=3)"
+# initial_4node = fresh 4-worker deployment; scaleup_plus4 = incremental scale-up from 4 to 8 workers
+config,set,VM_creation_mean_s,VM_creation_SD_s,K8s_setup_mean_s,K8s_setup_SD_s,Cilium_ready_mean_s,Cilium_ready_SD_s,VPC_task_mean_s,VPC_task_SD_s,Connectivity_test_mean_s,Connectivity_test_SD_s,Total_mean_s,Total_SD_s
+B-VXLAN,initial_4node,40.6,0.4,135.2,7.8,5.5,0.2,0.0,0.0,25.7,0.8,207.1,7.3
+B-Host,initial_4node,37.5,6.2,127.4,1.8,8.8,3.7,0.0,0.0,11.8,0.3,185.5,10.5
+N-Static,initial_4node,37.6,5.5,132.8,7.4,7.7,3.6,78.4,4.6,26.1,1.6,282.7,8.6
+N-Dynamic,initial_4node,40.6,0.3,132.3,8.5,10.8,3.6,198.1,3.2,30.8,8.2,412.7,19.4
+N-Cloud,initial_4node,40.7,0.6,134.0,2.4,6.1,1.4,62.9,3.6,26.4,0.5,270.1,7.4
+B-VXLAN,scaleup_plus4,29.5,0.2,95.7,4.6,6.6,1.4,0.0,0.0,27.4,1.1,159.1,5.7
+B-Host,scaleup_plus4,29.5,0.1,95.0,5.1,6.6,1.4,0.0,0.0,13.1,0.5,144.1,6.5
+N-Static,scaleup_plus4,29.3,0.3,92.0,4.6,6.7,1.3,83.7,5.6,27.7,0.6,239.5,7.6
+N-Dynamic,scaleup_plus4,29.4,0.5,94.8,4.9,7.5,1.3,95.4,1.1,26.6,0.1,253.6,2.6
+N-Cloud,scaleup_plus4,29.6,0.1,91.5,4.3,8.2,0.1,54.0,2.2,27.3,1.6,210.5,7.2
