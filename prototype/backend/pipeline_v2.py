@@ -23,22 +23,27 @@ from extract_v2 import ExtractedFields
 NAME = {"B1": "B-VXLAN", "N1": "N-Cloud", "N2": "N-Static", "N3": "N-Dynamic"}
 ALL = ["B1", "N1", "N2", "N3"]
 
-# Paper criterion ids c1..c5 -> code-order column index [tput, conv, fee, provisioning, headroom]
-PAPER_TO_CODE = {"c1": 0, "c2": 3, "c3": 4, "c4": 1, "c5": 2}
+# Paper criterion ids c1..c4 -> code-order column index [tput, conv, fee, provisioning, headroom]
+# (convergence, code index 1, is no longer a paper criterion; presets assign it level 0)
+PAPER_TO_CODE = {"c1": 0, "c2": 3, "c3": 4, "c4": 2}
 CODE_CRIT_NAMES = ["TCP throughput", "Routing convergence time", "Monthly routing cost",
                    "Provisioning time", "Routing scalability"]
 CODE_BENEFIT = [True, False, False, False, True]
 
 
 class OperatorForm(BaseModel):
-    """Structured-form input: baseline preferences + operator profile."""
+    """Structured form: canonical interface for the seven input-model fields.
+
+    Every field of Table tab:req-dims can be entered here directly; the
+    free-form request only auto-fills the same fields (extract_v2)."""
+    scale: Optional[int] = Field(None, description="Target worker-node count")
+    transparency_required: bool = Field(False, description="Traffic-path transparency required")
+    self_managed_required: bool = Field(False, description="Self-managed Kubernetes required")
+    budget_limit_usd: Optional[float] = Field(None, description="Strict monthly budget limit (USD)")
+    pod_renumbering: str = Field("unspecified", description="required | automated | unspecified")
     preset: str = Field("balanced", description="cost_first | balanced | perf_first")
     preset_explicit: bool = Field(False, description="True when the operator actively chose the preset")
-    criterion_priorities: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Explicit per-criterion importance overrides, c1..c6 -> ignore|low|medium|high")
-    routing_expertise: Optional[str] = None       # beginner | intermediate | expert
-    budget_flexibility: Optional[str] = None      # limited | flexible
+    expertise: str = Field("unspecified", description="beginner | intermediate | expert | unspecified")
 
 
 class OperatorInputV2(BaseModel):
@@ -58,51 +63,79 @@ class MergedInput:
     transparency_required: bool
     self_managed_required: bool
     budget_limit_usd: Optional[float]
-    control_capability_required: bool
     priority: str                   # cost_first | balanced | perf_first
-    priority_explicit: bool         # operator stated a priority (form preset or free-form)
-    routing_expertise: str
-    budget_flexibility: Optional[str]
+    pod_renumbering: str = "unspecified"    # required | automated | unspecified
+    routing_expertise: str = "unspecified"  # beginner | intermediate | expert | unspecified
     unresolved: List[str] = field(default_factory=list)
 
 
 def merge(form: OperatorForm, extracted: Optional[ExtractedFields]) -> MergedInput:
-    """Merge structured-form baselines with free-form statements.
+    """Merge the structured form (canonical input) with free-form statements.
 
-    Explicit free-form statements override preset-inherited values; a conflict
-    with a value the operator explicitly set in the form raises
-    ClarificationNeeded. Mandatory constraints come only from explicit
-    statements (the free-form request).
+    Extracted free-form statements fill fields the operator left at their form
+    defaults; a conflicting value for a field the operator explicitly set in
+    the form raises ClarificationNeeded. Unstated fields stay at their
+    unspecified defaults and never eliminate downstream.
     """
     e = extracted
+    explicit = form.model_fields_set
+
+    def resolve(name, extr_val, extr_stated, label):
+        form_val = getattr(form, name)
+        if not extr_stated:
+            return form_val
+        if name in explicit and form_val != extr_val:
+            raise ClarificationNeeded(
+                f"The request states {label}, but the form explicitly sets a "
+                f"different value ({form_val!r}). Which should apply?")
+        return extr_val
+
     priority = form.preset
     if e and e.stated_priority != "unspecified":
-        if form.preset_explicit and e.stated_priority != form.preset:
+        if (form.preset_explicit or "preset" in explicit) and e.stated_priority != form.preset:
             raise ClarificationNeeded(
                 f"The request states a {e.stated_priority.replace('_', '-')} priority, but the form "
                 f"explicitly selects the {form.preset.replace('_', '-')} preset. Which should apply?")
         priority = e.stated_priority
 
-    expertise = form.routing_expertise or "unspecified"
-    if e and e.routing_expertise != "unspecified":
-        expertise = e.routing_expertise
+    e_expertise = getattr(e, "routing_expertise", "unspecified") if e else "unspecified"
+    e_renumbering = getattr(e, "pod_renumbering", "unspecified") if e else "unspecified"
 
     return MergedInput(
-        scale=e.scale if e else None,
-        transparency_required=bool(e and e.transparency_required),
-        self_managed_required=bool(e and e.self_managed_required),
-        budget_limit_usd=e.budget_limit_usd if e else None,
-        control_capability_required=bool(e and e.control_capability_required),
+        scale=resolve("scale", e.scale if e else None, bool(e and e.scale is not None),
+                      f"a target scale of {e.scale if e else None} nodes"),
+        transparency_required=resolve("transparency_required", True,
+                                      bool(e and e.transparency_required),
+                                      "a traffic-path transparency requirement"),
+        self_managed_required=resolve("self_managed_required", True,
+                                      bool(e and e.self_managed_required),
+                                      "a self-managed Kubernetes requirement"),
+        budget_limit_usd=resolve("budget_limit_usd", e.budget_limit_usd if e else None,
+                                 bool(e and e.budget_limit_usd is not None),
+                                 f"a budget limit of ${e.budget_limit_usd if e else 0}"),
         priority=priority,
-        priority_explicit=bool(form.preset_explicit or (e and e.stated_priority != "unspecified")),
-        routing_expertise=expertise,
-        budget_flexibility=form.budget_flexibility,
+        pod_renumbering=resolve("pod_renumbering", e_renumbering,
+                                e_renumbering != "unspecified",
+                                f"a {e_renumbering} pod-CIDR renumbering requirement"),
+        routing_expertise=resolve("expertise", e_expertise, e_expertise != "unspecified",
+                                  f"{e_expertise} routing expertise"),
     )
 
 
 def apply_rules(m: MergedInput) -> Tuple[List[str], Dict[str, str]]:
-    """Five feasibility rules of Section 4.3. Unspecified fields never eliminate."""
+    """Six feasibility rules of Section 4.3. Unspecified fields never eliminate."""
     eliminated: Dict[str, str] = {}
+
+    if m.pod_renumbering in ("required", "automated") and "N1" not in eliminated:
+        eliminated["N1"] = ("in-place pod-CIDR renumbering is required and N-Cloud's pod "
+                            "range cannot be changed in place (migration required)")
+    if m.pod_renumbering == "automated" and "N2" not in eliminated:
+        eliminated["N2"] = ("automated pod-CIDR renumbering is required and N-Static "
+                            "requires manual replacement of every per-node route")
+
+    if m.routing_expertise == "beginner" and "N3" not in eliminated:
+        eliminated["N3"] = ("beginner routing expertise is stated and N-Dynamic requires "
+                            "BGP operation (AS numbers, timers, per-node peer maintenance)")
 
     if m.scale is not None:  # target scale
         for c, q in EFFECTIVE_QUOTA.items():
@@ -130,14 +163,6 @@ def apply_rules(m: MergedInput) -> Tuple[List[str], Dict[str, str]]:
                 eliminated[c] = (f"monthly routing fee ${cost_of(c, m.scale):.2f} exceeds the "
                                  f"stated ${m.budget_limit_usd:.2f} budget limit at {m.scale} nodes")
 
-    if m.control_capability_required:
-        # Only the self-managed natives expose direct control over route
-        # registration, propagation, and withdrawal (Table dim-maint).
-        for c, why in (("B1", "routing control is limited to the CNI-internal overlay"),
-                       ("N1", "routing control is limited to provider-exposed settings")):
-            if c not in eliminated:
-                eliminated[c] = f"a routing-control capability is required and {why}"
-
     feasible = [c for c in ALL if c not in eliminated]
     return feasible, eliminated
 
@@ -148,21 +173,8 @@ CODE_TO_PAPER = {v: k for k, v in PAPER_TO_CODE.items()}
 
 
 def derive_levels(m: MergedInput, form: OperatorForm) -> List[int]:
-    """Importance levels in code order, from preset + explicit overrides + profile defaults."""
-    levels = list(WEIGHT_PRESETS[m.priority])  # integer levels, code order
-    explicit = set()
-    for cid, lvl in form.criterion_priorities.items():
-        j = PAPER_TO_CODE.get(cid)
-        if j is not None and lvl in LEVEL:
-            levels[j] = LEVEL[lvl]
-            explicit.add(j)
-    # Profile-derived defaults fill in only when the operator stated no explicit
-    # ranking preference at all (Section 4.2); an explicitly chosen preset or a
-    # per-criterion override always takes precedence.
-    if not m.priority_explicit:
-        if m.budget_flexibility == "limited" and PAPER_TO_CODE["c5"] not in explicit:
-            levels[PAPER_TO_CODE["c5"]] = min(3, levels[PAPER_TO_CODE["c5"]] + 1)
-    return levels
+    """Importance levels in code order, taken from the selected preset."""
+    return list(WEIGHT_PRESETS[m.priority])
 
 
 def build_matrix(m: MergedInput, feasible: List[str]) -> Tuple[Dict[str, List[float]], List[str]]:
@@ -174,7 +186,7 @@ def build_matrix(m: MergedInput, feasible: List[str]) -> Tuple[Dict[str, List[fl
             mat[c][2] = cost_of(c, m.scale)
             mat[c][4] = headroom_of(c, m.scale)
     if m.scale is None:
-        dropped = ["c3", "c5"]  # cannot be instantiated without a scale
+        dropped = ["c3", "c4"]  # cannot be instantiated without a scale
     return mat, dropped
 
 
@@ -183,7 +195,7 @@ def topsis(m: MergedInput, form: OperatorForm, feasible: List[str]):
     levels = derive_levels(m, form)
     active = []
     for j in range(5):
-        if CODE_TO_PAPER[j] in uninstantiable or levels[j] == 0:
+        if levels[j] == 0 or CODE_TO_PAPER.get(j) in uninstantiable:
             continue
         if len({round(mat[c][j], 9) for c in feasible}) > 1:
             active.append(j)

@@ -17,7 +17,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "prototype", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "cloudroute-advisor", "backend"))
 
 import matplotlib
 matplotlib.use("Agg")
@@ -26,15 +26,17 @@ import matplotlib.pyplot as plt
 CRIT = ["Tput", "Conv", "Fee", "Prov", "Scal"]  # code order
 
 import os, sys
-sys.path.insert(0, os.path.join(HERE, "..", "prototype", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "cloudroute-advisor", "backend"))
 from config import DECISION_MATRIX, CRITERIA_BENEFIT, WEIGHT_PRESETS, cost_of, headroom_of
 
 # case -> (feasible ids, scale, preset)
 CASES = {
-    "CS1": (["B1", "N2", "N3"], 30,  "cost_first"),
+    # CS1: beginner routing expertise removes N3 during filtering (Section 4.3)
+    "CS1": (["B1", "N2"], 30,  "cost_first"),
     "CS2": (["N2", "N3"],       150, "cost_first"),
+    # CS3: scale rule removes N2 at 230 nodes (201-250 window); transparency removes B1
+    "CS3": (["N1", "N3"],       230, "balanced"),
     "CS4": (["N1", "N2", "N3"], 120, "perf_first"),
-    "CS5": (["N2", "N3"],       200, "perf_first"),
 }
 
 def eff_matrix(feas, n):
@@ -73,11 +75,20 @@ for label, (feasible, n, preset) in CASES.items():
     t = float(sum(lv))
     weights = [x / t for x in lv]
     M = eff_matrix(feasible, n)
+    # Drop zero-variance criteria first, then normalize over the active set, so the
+    # +-0.05 step is applied to the weights the ranking actually uses (Section 5.4).
+    active = [j for j in range(5)
+              if len({round(M[c][j], 9) for c in feasible}) > 1 and weights[j] > 0]
+    weights = [weights[j] if j in active else 0.0 for j in range(5)]
+    t = sum(weights)
+    weights = [x / t for x in weights]
     base_phi = topsis_with_weights(feasible, weights, M)
     base_winner = max(base_phi, key=base_phi.get)
     base_margin = base_phi[base_winner] - max(v for c, v in base_phi.items() if c != base_winner)
     pts = []
     for j in range(5):
+        if weights[j] == 0:  # inactive: zero-variance or not in the paper's criterion set
+            continue
         for delta in (+0.05, -0.05):
             w = list(weights)
             w[j] = max(0.0, w[j] + delta)
@@ -96,7 +107,7 @@ with open(os.path.join(HERE, "sensitivity_margin_data.csv"), "w", newline="") as
     w.writerows(rows)
 
 plt.rcParams.update({
-    "font.size": 7,
+    "font.size": 8,
     "font.family": "sans-serif",
     "font.sans-serif": ["Arial", "Liberation Sans", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
@@ -105,43 +116,47 @@ plt.rcParams.update({
 C_STABLE = "#5B7A9D"
 C_FLIP = "#B5453C"
 
-fig, ax = plt.subplots(figsize=(1.6, 1.55))
-order = ["CS1", "CS2", "CS4", "CS5"]
+fig, ax = plt.subplots(figsize=(3.3, 1.55))
+order = ["CS1", "CS2", "CS3", "CS4"]
 for i, label in enumerate(order):
     base_margin, pts = margins[label]
     for name, m in pts:
         color = C_FLIP if m < 0 else C_STABLE
-        ax.plot(m, i, "o", ms=2.9, mfc=color, mec="white", mew=0.4, zorder=3)
-    ax.plot(base_margin, i, "D", ms=3.4, mfc="none", mec="#333333", mew=0.7, zorder=4)
+        ax.plot(m, i, "o", ms=3.6, mfc=color, mec="white", mew=0.4, zorder=3)
+    ax.plot(base_margin, i, "D", ms=4.2, mfc="none", mec="#333333", mew=0.7, zorder=4)
 ax.axvline(0, color="#333333", lw=0.7, zorder=2)
 ax.set_yticks(range(len(order)))
-ax.set_yticklabels([l.replace("CS", "Case ") for l in order], fontsize=5.3)
+ax.set_yticklabels([l.replace("CS", "Case ") for l in order], fontsize=7)
 ax.invert_yaxis()
 ax.set_ylim(3.5, -0.5)
-ax.set_xlim(-0.24, 0.82)
-ax.set_xticks([0, 0.4, 0.8])
-ax.set_xlabel("Margin $\\Delta$", fontsize=6.5, labelpad=1)
-ax.tick_params(axis="x", labelsize=6)
+ax.set_xlim(-0.2, 1.0)
+ax.set_xticks([-0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+ax.set_xlabel("Margin $\\Delta$", fontsize=8, labelpad=1)
+ax.tick_params(axis="x", labelsize=7)
 ax.tick_params(axis="y", length=0)
 ax.minorticks_off()
 ax.grid(axis="x", alpha=0.25, lw=0.4)
 ax.set_axisbelow(True)
 handles = [
-    plt.Line2D([], [], marker="o", ls="", ms=2.9, mfc=C_STABLE, mec="white", mew=0.4,
+    plt.Line2D([], [], marker="o", ls="", ms=3.6, mfc=C_STABLE, mec="white", mew=0.4,
                label="Stable"),
-    plt.Line2D([], [], marker="o", ls="", ms=2.9, mfc=C_FLIP, mec="white", mew=0.4,
+    plt.Line2D([], [], marker="o", ls="", ms=3.6, mfc=C_FLIP, mec="white", mew=0.4,
                label="Flips"),
-    plt.Line2D([], [], marker="D", ls="", ms=3.4, mfc="none", mec="#333333", mew=0.7,
+    plt.Line2D([], [], marker="D", ls="", ms=4.2, mfc="none", mec="#333333", mew=0.7,
                label="Base"),
 ]
-ax.legend(handles=handles, fontsize=5.3, frameon=False, loc="lower center",
+ax.legend(handles=handles, fontsize=7, frameon=False, loc="lower center",
           bbox_to_anchor=(0.5, 1.0), ncol=3, borderpad=0.1,
           handlelength=0.9, handletextpad=0.3, columnspacing=0.7)
 fig.tight_layout(pad=0.25)
-fig.savefig(os.path.join(HERE, "..", "figure", "sensitivity_margin.pdf"))
+for figdir in (os.path.join(HERE, "..", "figure"),
+               os.path.join(HERE, "..", "jnca", "figure")):  # both builds read their own copy
+    if os.path.isdir(figdir):
+        fig.savefig(os.path.join(figdir, "sensitivity_margin.pdf"))
+        print("wrote", os.path.relpath(os.path.join(figdir, "sensitivity_margin.pdf"),
+                                       os.path.join(HERE, "..")))
 fig.savefig(os.path.join(HERE, "..", "figure", "sensitivity_margin_preview.png"), dpi=300)
 plt.close(fig)
-print("wrote figure/sensitivity_margin.pdf")
 for label in order:
     b, pts = margins[label]
     neg = [p for p in pts if p[1] < 0]

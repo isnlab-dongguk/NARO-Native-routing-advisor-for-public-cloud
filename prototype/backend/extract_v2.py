@@ -2,9 +2,9 @@
 
 Implements the extraction stage of the paper's Section 4 input model
 (Table tab:req-dims): mandatory constraints (target scale, traffic-path
-transparency, self-managed Kubernetes, monthly budget limit, required
-routing-control capability), ranking preferences (control direction, stated
-priority), and the routing-expertise profile field. The model records what
+transparency, self-managed Kubernetes, monthly budget limit, pod-CIDR
+renumbering), the decision priority, and the routing-expertise field
+(beginner level feeds a feasibility rule; all levels set explanation depth). The model records what
 the operator stated; feasibility and ranking are derived downstream by the
 rule engine.
 
@@ -31,9 +31,9 @@ class ExtractedFields:
     transparency_required: bool
     self_managed_required: bool
     budget_limit_usd: Optional[float]
-    control_capability_required: bool
     stated_priority: str        # cost_first | balanced | perf_first | unspecified
-    routing_expertise: str      # beginner | intermediate | expert | unspecified
+    pod_renumbering: str = "unspecified"    # required | automated | unspecified
+    routing_expertise: str = "unspecified"  # beginner | intermediate | expert | unspecified
 
     def as_dict(self):
         return {
@@ -41,8 +41,8 @@ class ExtractedFields:
             "transparency_required": self.transparency_required,
             "self_managed_required": self.self_managed_required,
             "budget_limit_usd": self.budget_limit_usd,
-            "control_capability_required": self.control_capability_required,
             "stated_priority": self.stated_priority,
+            "pod_renumbering": self.pod_renumbering,
             "routing_expertise": self.routing_expertise,
         }
 
@@ -55,9 +55,9 @@ SYSTEM_PROMPT = (
     "Mandatory constraints must be stated as requirements: a wish or soft preference "
     "is NOT a constraint. In particular, a monthly budget is extracted only when it "
     "is a strict/hard limit on recurring routing- or managed-service fees, and a "
-    "routing-control capability is marked required only when the operator states a "
-    "concrete capability (e.g., registering or withdrawing routes themselves) as "
-    "mandatory rather than preferred. Fields the operator does not mention stay at "
+    "pod-CIDR renumbering requirement is extracted only when the operator states that "
+    "pod addresses must be changeable after deployment. "
+    "Fields the operator does not mention stay at "
     "their unspecified defaults. If the cluster size (worker-node count) is not "
     "stated, set clarification_needed to true and ask for it; do not guess."
 )
@@ -94,27 +94,28 @@ EXTRACT_TOOL = {
                     "type": "number",
                     "description": "Strict monthly limit in USD on recurring routing-/managed-service fees, only when stated as a hard cap. Omit for soft wishes, general cost sensitivity, or unrelated spending figures.",
                 },
-                "control_capability_required": {
-                    "type": "boolean",
-                    "description": "True only when a concrete routing-control capability (direct control over route registration, advertisement, update, or withdrawal) is stated as mandatory.",
-                },
                 "stated_priority": {
                     "type": "string",
                     "enum": ["cost_first", "balanced", "perf_first", "unspecified"],
                     "description": "Stated overall priority between cost and performance; unspecified when not mentioned.",
                 },
+                "pod_renumbering": {
+                    "type": "string",
+                    "enum": ["required", "automated", "unspecified"],
+                    "description": "Stated requirement that pod CIDRs can be renumbered after deployment: 'required' when in-place renumbering must be possible, 'automated' when the renumbering must additionally happen without manual per-node route operations; unspecified when not mentioned.",
+                },
                 "routing_expertise": {
                     "type": "string",
                     "enum": ["beginner", "intermediate", "expert", "unspecified"],
-                    "description": "Stated BGP/routing expertise of the team; unspecified when not mentioned.",
+                    "description": "Stated routing/BGP experience of the operating team (e.g., 'nobody has touched BGP' = beginner, 'moderate BGP experience' = intermediate, 'we run our own routing stack' = expert); unspecified when not mentioned.",
                 },
             },
             "required": [
                 "clarification_needed",
                 "transparency_required",
                 "self_managed_required",
-                "control_capability_required",
                 "stated_priority",
+                "pod_renumbering",
                 "routing_expertise",
             ],
         },
@@ -133,6 +134,8 @@ def extract(text: str) -> ExtractedFields:
         ],
         tools=[EXTRACT_TOOL],
         tool_choice={"type": "function", "function": {"name": "extract_requirements"}},
+        # the gateway rejects function tools unless reasoning is disabled for this model
+        reasoning_effort="none",
     )
     data = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
     if data.get("clarification_needed") or data.get("scale") in (None, 0):
@@ -145,7 +148,7 @@ def extract(text: str) -> ExtractedFields:
         self_managed_required=bool(data.get("self_managed_required", False)),
         budget_limit_usd=(float(data["budget_limit_usd"])
                           if data.get("budget_limit_usd") is not None else None),
-        control_capability_required=bool(data.get("control_capability_required", False)),
         stated_priority=data.get("stated_priority", "unspecified"),
+        pod_renumbering=data.get("pod_renumbering", "unspecified"),
         routing_expertise=data.get("routing_expertise", "unspecified"),
     )

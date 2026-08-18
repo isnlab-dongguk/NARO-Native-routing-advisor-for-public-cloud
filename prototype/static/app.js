@@ -17,12 +17,12 @@ function applyTheme(theme) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  const saved = localStorage.getItem(THEME_KEY) || 'light';
   applyTheme(saved);
 }
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   applyTheme(next);
   localStorage.setItem(THEME_KEY, next);
@@ -30,46 +30,35 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 
 initTheme();
 
-// ── Advanced per-criterion overrides ─────────────────────────────────────────
-const CRITERIA = [
-  ['c1', 'Data-plane performance'],
-  ['c2', 'Provisioning time'],
-  ['c3', 'Routing scalability'],
-  ['c4', 'Routing convergence time'],
-  ['c5', 'Monthly routing cost'],
-];
-
-document.getElementById('criterion-priorities').innerHTML = CRITERIA.map(([id, name]) => `
-  <div class="form-group">
-    <label for="prio-${id}">${id} — ${name}</label>
-    <select id="prio-${id}" data-cid="${id}">
-      <option value="" selected>From preset</option>
-      <option value="ignore">Ignore</option>
-      <option value="low">Low</option>
-      <option value="medium">Medium</option>
-      <option value="high">High</option>
-    </select>
-  </div>`).join('');
-
 // preset_explicit: true once the operator actively changes the preset
 let presetExplicit = false;
 document.getElementById('preset').addEventListener('change', () => { presetExplicit = true; });
 
 // ── Submit: single merged request ────────────────────────────────────────────
 document.getElementById('submit-btn').addEventListener('click', async () => {
-  const val = (id) => document.getElementById(id).value || null;
-  const priorities = {};
-  document.querySelectorAll('#criterion-priorities select').forEach(s => {
-    if (s.value) priorities[s.dataset.cid] = s.value;
-  });
+  // Only fields the operator actually filled in are sent: the backend treats every
+  // field present in the payload as explicitly set (pipeline_v2.merge).
+  const num = (id) => {
+    const v = document.getElementById(id).value.trim();
+    return v === '' ? null : Number(v);
+  };
+  const sel = (id) => document.getElementById(id).value || null;
+  const form = {
+    preset: document.getElementById('preset').value,
+    preset_explicit: presetExplicit,
+  };
+  const scale = num('scale');
+  if (scale !== null) form.scale = scale;
+  const budget = num('budget');
+  if (budget !== null) form.budget_limit_usd = budget;
+  if (document.getElementById('transparency').checked) form.transparency_required = true;
+  if (document.getElementById('self-managed').checked) form.self_managed_required = true;
+  const renumbering = sel('renumbering');
+  if (renumbering) form.pod_renumbering = renumbering;
+  const expertise = sel('expertise');
+  if (expertise) form.expertise = expertise;
   const body = {
-    form: {
-      preset: document.getElementById('preset').value,
-      preset_explicit: presetExplicit,
-      criterion_priorities: priorities,
-      routing_expertise: val('routing_expertise'),
-      budget_flexibility: val('budget_flexibility'),
-    },
+    form,
     freeform_text: document.getElementById('freeform-text').value.trim() || null,
   };
   showLoading();
@@ -139,23 +128,18 @@ function renderResult(data) {
   }
 
   showResultContent();
-
-  requestAnimationFrame(() => {
-    const content = document.getElementById('result-content');
-    const h = content.offsetHeight + 36;
-    expPanel.style.height = `${h}px`;
-  });
 }
 
 function renderExtracted(x) {
+  const dash = (v) => (v && v !== 'unspecified' ? v.replace(/_/g, '-') : 'Not stated');
   const chips = [
-    ['Scale', x.scale != null ? `${x.scale} nodes` : 'unspecified'],
+    ['Scale', x.scale != null ? `${x.scale} nodes` : 'Not stated'],
     ['Transparency', x.transparency_required ? 'Required' : 'Not required'],
     ['Self-managed K8s', x.self_managed_required ? 'Required' : 'Not required'],
     ['Budget limit', x.budget_limit_usd != null ? `$${x.budget_limit_usd}/mo` : 'None'],
-    ['Control capability', x.control_capability_required ? 'Required' : 'Not required'],
-    ['Priority', x.stated_priority.replace('_', '-')],
-    ['Expertise', x.routing_expertise],
+    ['Adaptability', dash(x.pod_renumbering)],
+    ['Priority', dash(x.stated_priority)],
+    ['Expertise', dash(x.routing_expertise)],
   ];
   document.getElementById('extracted-req').innerHTML = chips.map(([label, val]) =>
     `<div class="req-chip"><span>${label}</span>${val}</div>`
@@ -192,7 +176,7 @@ function renderScores(data) {
     rows.push(`
       <tr class="eliminated">
         <td><code>${SHORT[name]}</code> ${name}</td>
-        <td><span class="elim-reason">Eliminated: ${reason}</span></td>
+        <td><span class="elim-reason"><span class="badge-elim">Eliminated</span>${reason}</span></td>
       </tr>`);
   });
   document.getElementById('scores-tbody').innerHTML = rows.join('');
@@ -227,7 +211,7 @@ function showBox(msg, clarify) {
 
 function showError(msg) { showBox(`Error: ${msg}`, false); }
 
-// Missing or conflicting information: NARA asks instead of guessing (Section 4.2/4.3)
+// Missing or conflicting information: NARO asks instead of guessing (Section 4.2/4.3)
 function showClarification(question) { showBox(`Clarification needed: ${question}`, true); }
 
 // Empty feasible set: report the conflict and the relaxation options (Section 4.3)

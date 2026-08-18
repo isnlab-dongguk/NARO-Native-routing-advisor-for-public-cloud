@@ -51,12 +51,14 @@ def headroom_of(config_id: str, scale: int) -> float:
 
 
 
-# Importance levels 0-3 (ignore/low/medium/high), Appendix B.
-# code order [tput, conv, fee, provisioning, headroom] = paper [c1, c4, c5, c2, c3]
+# Importance levels 0-3 (low/medium/high; 0 = criterion removed), Table weight-profiles.
+# code order [tput, conv, fee, provisioning, headroom] = paper [c1, -, c4, c2, c3].
+# Convergence (code index 1) was dropped from the paper's criterion set in the
+# 2026-08 revision; its level is fixed at 0 so the pipeline never activates it.
 WEIGHT_PRESETS: Dict[str, List[float]] = {
-    "cost_first":  [1, 2, 3, 2, 1],
-    "balanced":    [2, 2, 2, 2, 1],
-    "perf_first":  [3, 1, 1, 1, 1],
+    "cost_first":  [1, 0, 3, 2, 1],
+    "balanced":    [2, 0, 2, 2, 1],
+    "perf_first":  [3, 0, 1, 1, 1],
 }
 
 # Human-readable config descriptions

@@ -16,10 +16,10 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "prototype", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "cloudroute-advisor", "backend"))
 
 # .env for the gateway key
-for line in open(os.path.join(HERE, "..", "..", "prototype", ".env")):
+for line in open(os.path.join(HERE, "..", "..", "cloudroute-advisor", ".env")):
     line = line.strip()
     if line and not line.startswith("#") and "=" in line:
         k, v = line.split("=", 1)
@@ -38,9 +38,8 @@ FREEFORM_INSTRUCTIONS = (
     "Respond with only a JSON object with keys: scale (integer worker-node count or null), "
     "transparency_required (boolean), self_managed_required (boolean), "
     "budget_limit_usd (number or null; only a strict monthly limit on routing-/managed-service fees), "
-    "control_capability_required (boolean; only a concrete routing-control capability stated as mandatory), "
-    "control_direction ('delegated', 'neutral', 'direct', or 'unspecified'), "
     "stated_priority ('cost_first', 'balanced', 'perf_first', or 'unspecified'), "
+    "pod_renumbering ('required', 'automated', or 'unspecified'; only when in-place pod-CIDR renumbering is stated as a requirement), "
     "routing_expertise ('beginner', 'intermediate', 'expert', or 'unspecified'). "
     "If the cluster size is not stated, respond instead with "
     '{"clarification": "<your question to the operator>"}.'
@@ -104,7 +103,7 @@ def main():
                 f.write(json.dumps(rec) + "\n")
         return x["id"], mode, rep, out["outcome"]
 
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=2) as pool:
         futs = [pool.submit(work, j) for j in jobs]
         for n, fut in enumerate(as_completed(futs), 1):
             sid, mode, rep, oc = fut.result()

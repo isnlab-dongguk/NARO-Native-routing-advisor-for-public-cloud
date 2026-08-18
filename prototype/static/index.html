@@ -3,130 +3,175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NARA — Native Routing Advisor</title>
-  <link rel="stylesheet" href="/static/style.css?v=4" />
+  <title>NARO — Native Routing Advisor</title>
+  <link rel="stylesheet" href="/static/style.css?v=11" />
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">⬡</span>
-        <span class="logo-text">NARA</span>
-        <span class="tagline">Native Routing Advisor for Public Cloud Kubernetes</span>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">⬡</span>
+        <span class="brand-name">NARO</span>
+        <span class="brand-sep"></span>
+        <span class="brand-tagline">Native Routing Advisor for Public-Cloud Kubernetes</span>
       </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-        <span class="theme-icon" id="theme-icon">☀️</span>
-        <span class="theme-label" id="theme-label">Light</span>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+        <span class="theme-icon" id="theme-icon">🌙</span>
+        <span class="theme-label" id="theme-label">Dark</span>
       </button>
     </div>
   </header>
 
-  <main>
-    <!-- Input panel 1: structured form (baseline preferences + operator profile) -->
-    <section class="panel input-panel">
-      <h3>Baseline preferences &amp; operator profile</h3>
+  <main class="layout">
 
-      <div class="form-group">
-        <label for="preset">Preference profile</label>
-        <select id="preset" name="preset">
-          <option value="cost_first">Cost-first — minimize spend</option>
-          <option value="balanced" selected>Balanced (default)</option>
-          <option value="perf_first">Performance-first</option>
-        </select>
-      </div>
+    <!-- ── Left column: operator input ─────────────────────────────────── -->
+    <aside class="col-input">
 
+      <section class="card input-card">
+        <header class="card-head">
+          <h2 class="card-title">Operator requirements</h2>
+          <span class="pill">Structured form</span>
+        </header>
+        <p class="card-sub">Every field of the input model can be entered here; leave a field untouched to leave it unstated.</p>
 
-      <div class="form-group">
-        <label for="routing_expertise">Routing expertise</label>
-        <select id="routing_expertise" name="routing_expertise">
-          <option value="" selected>Unspecified</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="expert">Expert</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="budget_flexibility">Budget flexibility</label>
-        <select id="budget_flexibility" name="budget_flexibility">
-          <option value="" selected>Unspecified</option>
-          <option value="limited">Limited</option>
-          <option value="flexible">Flexible</option>
-        </select>
-      </div>
-
-      <details class="form-group">
-        <summary>Advanced: per-criterion importance overrides</summary>
-        <div id="criterion-priorities"></div>
-      </details>
-    </section>
-
-    <!-- Input panel 2: free-form deployment request -->
-    <section class="panel input-panel">
-      <h3>Deployment request (free-form, optional)</h3>
-      <div class="form-group">
-        <textarea
-          id="freeform-text"
-          name="freeform_text"
-          rows="10"
-          placeholder="e.g. We run a 200-node self-managed kubeadm cluster on Spot VMs. Encapsulation is prohibited. Our expert networking team wants direct control over routing policy. Performance over cost."
-        ></textarea>
-        <p class="hint">Mandatory constraints (target scale, transparency, self-managed Kubernetes,
-        budget limit, required routing-control capability) are stated here; an LLM extracts them
-        into the same schema and NARA merges both sources. Requires <code>GATEWAY_API_KEY</code>
-        on the server.</p>
-      </div>
-      <button type="button" id="submit-btn" class="btn-primary">Get Recommendation</button>
-    </section>
-
-    <!-- Results panel -->
-    <section class="panel results-panel" id="results" style="display:none;">
-      <div id="loading" class="loading" style="display:none;">
-        <div class="spinner"></div>
-        <p>Analyzing requirements…</p>
-      </div>
-
-      <div id="result-content" style="display:none;">
-        <div class="recommendation-header">
-          <div class="rec-badge" id="rec-badge"></div>
-          <div class="rec-info">
-            <h2 id="rec-name"></h2>
-            <p id="rec-desc"></p>
+        <div class="field">
+          <label for="scale">Target cluster scale</label>
+          <div class="input-affix">
+            <input type="number" id="scale" name="scale" min="1" step="1"
+                   placeholder="e.g. 200" autocomplete="off" />
+            <span class="affix">nodes</span>
           </div>
         </div>
 
-        <div id="extracted-req-section" style="display:none;">
-          <h3>Extracted Requirements (free-form)</h3>
-          <div id="extracted-req" class="req-chips"></div>
+        <div class="field">
+          <span class="field-label">Mandatory constraints</span>
+          <label class="check">
+            <input type="checkbox" id="transparency" />
+            <span>Traffic-path transparency required</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="self-managed" />
+            <span>Self-managed Kubernetes required</span>
+          </label>
         </div>
 
-        <h3>Configuration Scores</h3>
-        <div class="scores-table-wrap">
-          <table class="scores-table" id="scores-table">
-            <thead>
-              <tr>
-                <th>Configuration</th>
-                <th>TOPSIS &phi;</th>
-              </tr>
-            </thead>
-            <tbody id="scores-tbody"></tbody>
-          </table>
+        <div class="field">
+          <label for="budget">Monthly budget limit</label>
+          <div class="input-affix">
+            <span class="affix affix-lead">$</span>
+            <input type="number" id="budget" name="budget" min="0" step="1"
+                   placeholder="none" autocomplete="off" />
+            <span class="affix">/ mo</span>
+          </div>
+          <p class="field-hint">Applies to routing-specific fees, not total cluster cost.</p>
         </div>
 
-        <div class="weight-info" id="weight-info"></div>
-        <div class="unresolved-note" id="unresolved-info" style="display:none;"></div>
-      </div>
+        <div class="field">
+          <label for="renumbering">Routing adaptability</label>
+          <select id="renumbering" name="renumbering">
+            <option value="" selected>Not stated</option>
+            <option value="required">Pod CIDRs must be changeable in place</option>
+            <option value="automated">Change must also be automated</option>
+          </select>
+        </div>
 
-      <div id="error-box" class="error-box" style="display:none;"></div>
-    </section>
+        <div class="field">
+          <label for="preset">Decision priority</label>
+          <select id="preset" name="preset">
+            <option value="cost_first">Cost-first — minimize spend</option>
+            <option value="balanced" selected>Balanced (default)</option>
+            <option value="perf_first">Performance-first</option>
+          </select>
+        </div>
 
-    <!-- Explanation panel -->
-    <section class="panel explanation-panel" id="explanation-panel" style="display:none;">
-      <h3>Recommendation Explanation</h3>
-      <div class="explanation-box" id="explanation-text"></div>
-    </section>
+        <div class="field">
+          <label for="expertise">Routing expertise</label>
+          <select id="expertise" name="expertise">
+            <option value="" selected>Not stated</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="expert">Expert</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="card input-card">
+        <header class="card-head">
+          <h2 class="card-title">Deployment request</h2>
+          <span class="pill pill-muted">Optional</span>
+        </header>
+        <p class="card-sub">Describe the deployment in natural language and the extractor fills the same fields above, shown with the recommendation for review.</p>
+
+        <div class="field">
+          <textarea id="freeform-text" name="freeform_text" rows="5" autocomplete="off"
+            placeholder="e.g. We run a 200-node batch cluster across peered VPCs. Workloads in the peered VPCs must reach pods directly, so encapsulation is not acceptable. Address overlaps may force us to renumber pod CIDRs, and the routing must adapt automatically without per-node route edits."></textarea>
+        </div>
+
+        <button type="button" id="submit-btn" class="btn-primary">
+          Get recommendation
+        </button>
+        <p class="field-hint centered">Free-form extraction needs <code>GATEWAY_API_KEY</code>; a form-only request runs without it.</p>
+      </section>
+
+    </aside>
+
+    <!-- ── Right column: decision output ───────────────────────────────── -->
+    <div class="col-main">
+
+      <section class="card results-card" id="results" style="display:none;">
+
+        <div id="loading" class="loading" style="display:none;">
+          <div class="spinner"></div>
+          <p>Evaluating configurations…</p>
+        </div>
+
+        <div id="result-content" style="display:none;">
+
+          <div class="hero">
+            <div class="hero-badge" id="rec-badge"></div>
+            <div class="hero-body">
+              <span class="hero-eyebrow">Recommended configuration</span>
+              <h2 id="rec-name"></h2>
+              <p id="rec-desc"></p>
+            </div>
+          </div>
+
+          <div id="extracted-req-section" style="display:none;">
+            <h3 class="section-title">Extracted from the request</h3>
+            <div id="extracted-req" class="req-chips"></div>
+          </div>
+
+          <h3 class="section-title">Configuration scores</h3>
+          <div class="scores-table-wrap">
+            <table class="scores-table" id="scores-table">
+              <thead>
+                <tr>
+                  <th>Configuration</th>
+                  <th>TOPSIS &phi;</th>
+                </tr>
+              </thead>
+              <tbody id="scores-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="note weight-info" id="weight-info"></div>
+          <div class="note note-warn unresolved-note" id="unresolved-info" style="display:none;"></div>
+        </div>
+
+        <div id="error-box" class="error-box" style="display:none;"></div>
+      </section>
+
+      <section class="card explanation-card" id="explanation-panel" style="display:none;">
+        <header class="card-head">
+          <h2 class="card-title">Why this configuration</h2>
+          <span class="pill pill-muted">Generated explanation</span>
+        </header>
+        <div class="explanation-box" id="explanation-text"></div>
+      </section>
+
+    </div>
   </main>
 
-  <script src="/static/app.js?v=4"></script>
+  <script src="/static/app.js?v=11"></script>
 </body>
 </html>

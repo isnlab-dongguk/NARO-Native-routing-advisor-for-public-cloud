@@ -88,7 +88,7 @@ print("wrote figure/llm_eval_extraction.pdf")
 # (b) faithfulness audit: checkable statements per case (results_v2/faithfulness_audit_v2.md;
 # paper labels — Case 5 is the 200-node contested case)
 CASES = ["Case 1", "Case 2", "Case 3", "Case 4", "Case 5"]
-OK = [8, 11, 10, 8, 10]
+OK = [9, 9, 9, 9, 9]
 FLAW = [0, 0, 0, 0, 0]
 
 fig, ax = plt.subplots(figsize=(1.55, 1.55))

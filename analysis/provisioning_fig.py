@@ -6,13 +6,14 @@ Produces three PDFs for the single-column side-by-side subfigure layout:
   figure/provisioning_initial.pdf  — (a) initial 4-worker deployment (with config labels)
   figure/provisioning_scaleup.pdf  — (b) incremental scale-up 4 -> 8 workers
                                      (added time only, per phase; no labels)
-Data: analysis/provisioning_raw.xlsx (3 repetitions per cell, ms).
+Data: analysis/Exp_provisioning time.xlsx (3 repetitions per cell, ms).
 
 Design: the three shared phases (VM creation, Kubernetes setup, CNI setup)
 are configuration-invariant and drawn in muted slates; the mechanism-specific
 VPC task carries the accent color, since it alone separates the
 configurations. Error caps show the SD of the total.
 """
+import os
 import openpyxl, statistics as st
 import matplotlib
 matplotlib.use("Agg")
@@ -22,11 +23,15 @@ CFGS = ["HOST", "VXLAN", "STATIC", "DYNAMIC", "CLOUD"]  # unified config order
 LABEL = {"VXLAN": "B-VXLAN", "HOST": "B-Host", "STATIC": "N-Static",
          "DYNAMIC": "N-Dynamic", "CLOUD": "N-Cloud"}
 PHASES = ["T0_to_T1", "T1_to_T2", "T2_to_T3", "T3_to_T4", "T4_to_T5"]
+# T3_to_T4 (mechanism-specific cloud-routing work) and T4_to_T5 (wait until pods
+# first reach each other) are plotted as one segment, so the four bars still sum
+# to the same total wall-clock time.
+MERGE_LAST_TWO = True
 PNAME = ["Infrastructure provisioning", "Kubernetes setup", "CNI setup",
-         "VPC task", "Connectivity check"]
-COLOR = ["#9AA7B6", "#5A6B7E", "#0EB4FC", "#1B9E77", "#ED0086"]
+         "Routing setup"]
+COLOR = ["#9AA7B6", "#5A6B7E", "#0EB4FC", "#1B9E77"]
 
-wb = openpyxl.load_workbook("provisioning_raw.xlsx", data_only=True)
+wb = openpyxl.load_workbook("Exp_provisioning time.xlsx", data_only=True)
 
 # GKE re-run (fig3-gke.csv, 2026-07-30) supersedes the alias-IP CLOUD sheet:
 # same layout — cols 1-3 = initial 4-worker reps, cols 6-8 = scale-up reps (ms).
@@ -50,6 +55,8 @@ def phase_stats(cfg, offs):
              if r[0] and str(r[0]).startswith("T")})
     means = [sum(st.mean(rows[p][off + i] for i in range(3)) for off in offs) / 1000
              for p in PHASES]
+    if MERGE_LAST_TWO:
+        means = means[:3] + [means[3] + means[4]]
     tot = [sum(rows["T0_to_T5"][off + i] for off in offs) / 1000 for i in range(3)]
     return means, st.mean(tot), st.stdev(tot)
 
@@ -71,9 +78,7 @@ def panel(offs, outfile, ylabels, figw, xlim, xticks):
                 ax.barh(yi, m, left=left, height=0.62, color=c,
                         edgecolor="white", linewidth=0.6)
             left += m
-        ax.errorbar(tot, yi, xerr=sd, fmt="none", ecolor="black",
-                    elinewidth=0.7, capsize=1.5)
-        ax.annotate(f"{tot:.1f}", xy=(tot + sd + 0.015 * xlim, yi), va="center",
+        ax.annotate(f"{tot:.1f}", xy=(tot + 0.015 * xlim, yi), va="center",
                     fontsize=6, color="#333333")
     ax.set_yticks(list(ys))
     if ylabels:
@@ -89,20 +94,24 @@ def panel(offs, outfile, ylabels, figw, xlim, xticks):
     ax.grid(axis="x", alpha=0.25, lw=0.4)
     ax.set_axisbelow(True)
     fig.tight_layout(pad=0.2)
-    fig.savefig(outfile)
+    for d in ("../figure/", "../jnca/figure/"):
+        if os.path.isdir(d):
+            fig.savefig(d + outfile)
+            print("wrote", d + outfile)
     plt.close(fig)
-    print("wrote", outfile)
 
 # Both panels share the same x-range so bar lengths are visually comparable
 # across (a) and (b) — (b) is cumulative and must LOOK longer than (a).
-panel([1], "../figure/provisioning_initial.pdf", True, 2.05, 900, [0, 300, 600, 900])
+panel([1], "provisioning_initial.pdf", True, 2.05, 900, [0, 300, 600, 900])
 # (b) cumulative: initial deployment + incremental scale-up, summed per phase
-panel([6], "../figure/provisioning_scaleup.pdf", False, 1.45, 900, [0, 300, 600, 900])
+panel([6], "provisioning_scaleup.pdf", False, 1.45, 900, [0, 300, 600, 900])
 
 # legend-only figure, included at natural size (no stretching)
 figl = plt.figure(figsize=(3.4, 0.5))
 handles = [plt.Rectangle((0, 0), 1, 1, color=c, ec="white") for c in COLOR]
-figl.legend(handles, PNAME, loc="center", ncol=3, fontsize=6.5,
+figl.legend(handles, PNAME, loc="center", ncol=4, fontsize=6.5,
             frameon=False, handlelength=1.1, columnspacing=0.9, handletextpad=0.5)
-figl.savefig("../figure/provisioning_legend.pdf", bbox_inches="tight", pad_inches=0.02)
-print("wrote ../figure/provisioning_legend.pdf")
+for d in ("../figure/", "../jnca/figure/"):
+    if os.path.isdir(d):
+        figl.savefig(d + "provisioning_legend.pdf", bbox_inches="tight", pad_inches=0.02)
+        print("wrote", d + "provisioning_legend.pdf")

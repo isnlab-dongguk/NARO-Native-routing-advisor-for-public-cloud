@@ -6,7 +6,7 @@ from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIELDS = ["scale", "transparency_required", "self_managed_required", "budget_limit_usd",
-          "control_capability_required", "stated_priority", "routing_expertise"]
+          "stated_priority", "pod_renumbering", "routing_expertise"]
 
 
 def norm(v, field):

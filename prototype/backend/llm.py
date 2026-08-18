@@ -5,9 +5,8 @@ from openai import OpenAI
 from models import RequirementVector, InfraPreference, ChurnProfile, MaintenancePreference, BgpExpertise, CostSensitivity, RecommendationResult
 
 _client: Optional[OpenAI] = None
-_MODEL = os.environ.get("LLM_MODEL", "claude-opus-5")
-# Any OpenAI-compatible endpoint; set LLM_BASE_URL and GATEWAY_API_KEY in prototype/.env
-_GATEWAY_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+_MODEL = "gpt-5.6-luna"
+_GATEWAY_BASE_URL = "https://factchat-cloud.mindlogic.ai/v1/gateway"
 
 _SYSTEM_PROMPT = (
     "You are NARO (NAtive ROuting advisor), an expert system that helps Kubernetes operators choose the optimal "
@@ -117,7 +116,7 @@ def _get_client() -> OpenAI:
 
 
 def extract_requirements(text: str) -> RequirementVector:
-    """Parse a natural-language request into a structured RequirementVector via the configured LLM."""
+    """Use Claude via gateway to parse natural language into a structured RequirementVector."""
     client = _get_client()
 
     response = client.chat.completions.create(
@@ -154,7 +153,7 @@ def extract_requirements(text: str) -> RequirementVector:
 
 
 def generate_explanation(result: RecommendationResult, original_text: Optional[str] = None) -> str:
-    """Generate a natural-language explanation of the recommendation via the configured LLM."""
+    """Use Claude via gateway to generate a natural language explanation of the recommendation."""
     client = _get_client()
 
     req = result.extracted_requirements

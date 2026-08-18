@@ -91,7 +91,7 @@ print("wrote ../figure/dataplane_cpu.pdf")
 # legend-only figure, included at natural size
 figl = plt.figure(figsize=(3.2, 0.35))
 handles = [plt.Rectangle((0, 0), 1, 1, color=COLOR[c], ec="white") for c in CFGS]
-figl.legend(handles, CFGS, loc="center", ncol=3,
+figl.legend(handles, CFGS, loc="center", ncol=5,
             fontsize=6.5, frameon=False, handlelength=1.1,
             columnspacing=0.8, handletextpad=0.4)
 figl.savefig("../figure/dataplane_legend.pdf", bbox_inches="tight", pad_inches=0.02)

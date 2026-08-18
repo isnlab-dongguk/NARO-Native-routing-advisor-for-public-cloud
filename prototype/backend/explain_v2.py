@@ -2,8 +2,7 @@
 
 The generator receives only the deterministic decision record: elimination
 reasons, instantiated criterion values, weights, scores, and unresolved
-inputs, plus the operator's routing expertise for technical depth.
-No deployment parameters.
+inputs, No deployment parameters.
 """
 from typing import Optional
 
@@ -13,13 +12,14 @@ from pipeline_v2 import MergedInput, NAME, PAPER_TO_CODE
 
 PAPER_ORDER = [("c1 TCP throughput (Gbps)", 0), ("c2 provisioning time (s)", 3),
                ("c3 routing scalability (remaining ceiling share)", 4),
-               ("c4 routing convergence time (s)", 1), ("c5 monthly routing cost (USD)", 2)]
+               ("c4 monthly routing cost (USD)", 2)]
 
 PROMPT = (
     "Generate a concise natural-language recommendation explanation (4-6 sentences) "
     "for a Kubernetes operator, based ONLY on the decision record below. "
     "Tie every stated reason to a filtering rule, a criterion value, or a score from "
-    "the record. You may outline the major components the recommendation entails, "
+    "the record. You may outline the major components the recommendation entails "
+    "(for example, Cloud Router provisioning and per-node BGP peering for N-Dynamic), "
     "but do not prescribe concrete deployment parameter values such as timers, CIDR "
     "sizes, or thresholds. Match the technical depth to the operator's routing "
     "expertise level. Do not invent measurements or rationale beyond the record.\n\n"
@@ -52,7 +52,6 @@ def build_context(m: MergedInput, result: dict, feasible_ids) -> str:
 - self-managed Kubernetes required: {m.self_managed_required}
 - strict monthly budget: {m.budget_limit_usd if m.budget_limit_usd is not None else 'none stated'}
 - stated priority: {m.priority}
-- routing expertise: {m.routing_expertise}
 
 Eliminated configurations (feasibility filtering):
 {elim}
