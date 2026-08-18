@@ -16,10 +16,10 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "cloudroute-advisor", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "prototype", "backend"))
 
 # .env for the gateway key
-for line in open(os.path.join(HERE, "..", "..", "cloudroute-advisor", ".env")):
+for line in open(os.path.join(HERE, "..", "..", "prototype", ".env")):
     line = line.strip()
     if line and not line.startswith("#") and "=" in line:
         k, v = line.split("=", 1)

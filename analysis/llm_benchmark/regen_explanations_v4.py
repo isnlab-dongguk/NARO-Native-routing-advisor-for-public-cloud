@@ -12,8 +12,8 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "cloudroute-advisor", "backend"))
-for line in open(os.path.join(HERE, "..", "..", "cloudroute-advisor", ".env")):
+sys.path.insert(0, os.path.join(HERE, "..", "..", "prototype", "backend"))
+for line in open(os.path.join(HERE, "..", "..", "prototype", ".env")):
     line = line.strip()
     if line and "=" in line and not line.startswith("#"):
         k, v = line.split("=", 1)

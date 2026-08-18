@@ -22,9 +22,15 @@ COLOR = {"B-Host": "#D4DAE2", "B-VXLAN": "#8D99A6", "N-Cloud": "#FFA500",
          "N-Static": "#920923", "N-Dynamic": "#000080"}
 
 data = {}
-with open("dataplane_v3_data.csv") as f:
+# Long-format means over three runs; see fig2_dataplane_summary.csv for units.
+COL = {"tcp_throughput": "tcp_gbps",
+       "sender_cpu_user": "snd_user_pct", "sender_cpu_system": "snd_system_pct",
+       "sender_cpu_iowait": "snd_iowait_pct", "sender_cpu_softirq": "snd_softirq_pct",
+       "receiver_cpu_user": "rcv_user_pct", "receiver_cpu_system": "rcv_system_pct",
+       "receiver_cpu_iowait": "rcv_iowait_pct", "receiver_cpu_softirq": "rcv_softirq_pct"}
+with open("fig2_dataplane_summary.csv") as f:
     for row in csv.DictReader(r for r in f if not r.startswith("#")):
-        data[row["config"]] = {k: float(v) for k, v in row.items() if k != "config"}
+        data.setdefault(row["config"], {})[COL[row["metric"]]] = float(row["mean"])
 
 plt.rcParams.update({
     "font.size": 7,

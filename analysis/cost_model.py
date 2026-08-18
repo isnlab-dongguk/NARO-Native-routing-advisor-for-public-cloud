@@ -80,5 +80,19 @@ ax.legend(loc="upper left", fontsize=6.5, frameon=False, handlelength=1.6)
 ax.grid(True, which="major", axis="y", alpha=0.25, lw=0.4)
 ax.set_axisbelow(True)
 fig.tight_layout(pad=0.3)
+# ── Data export ──────────────────────────────────────────────────────────────
+import csv
+with open("fig4_cost_model.csv", "w", newline="") as _f:
+    _f.write("# Figure 4 data: routing-specific monthly fee modelled from published Google Cloud list prices.\n")
+    _f.write("# Modelled, not measured: N-Dynamic = ceil(n/8) x $54.75 NCC spoke; "
+             "N-Cloud = flat $73.00 GKE fee; N-Static = $0.\n")
+    _w = csv.writer(_f)
+    _w.writerow(["figure", "config", "nodes", "fee", "unit"])
+    for _i, _n in enumerate(n):
+        _w.writerow([4, "N-Dynamic", int(_n), round(float(cost_ndynamic[_i]), 2), "USD/month"])
+        _w.writerow([4, "N-Cloud",   int(_n), round(float(cost_ncloud[_i]), 2),   "USD/month"])
+        _w.writerow([4, "N-Static",  int(_n), 0.0,                                "USD/month"])
+print("wrote fig4_cost_model.csv")
+
 fig.savefig("../figure/cost_crossover.pdf")
 print("wrote ../figure/cost_crossover.pdf")

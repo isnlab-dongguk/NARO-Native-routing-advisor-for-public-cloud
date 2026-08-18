@@ -3,7 +3,7 @@
 (five measured criteria: c1 tput, c2 provisioning, c3 scalability,
 c4 convergence, c5 monthly cost)."""
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cloudroute-advisor", "backend"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "prototype", "backend"))
 from pipeline_v2 import OperatorForm, merge, apply_rules, topsis, NAME
 from extract_v2 import ExtractedFields
 

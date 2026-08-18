@@ -17,7 +17,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "cloudroute-advisor", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "prototype", "backend"))
 
 import matplotlib
 matplotlib.use("Agg")
@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 CRIT = ["Tput", "Conv", "Fee", "Prov", "Scal"]  # code order
 
 import os, sys
-sys.path.insert(0, os.path.join(HERE, "..", "cloudroute-advisor", "backend"))
+sys.path.insert(0, os.path.join(HERE, "..", "prototype", "backend"))
 from config import DECISION_MATRIX, CRITERIA_BENEFIT, WEIGHT_PRESETS, cost_of, headroom_of
 
 # case -> (feasible ids, scale, preset)
@@ -101,9 +101,11 @@ for label, (feasible, n, preset) in CASES.items():
     margins[label] = (base_margin, pts)
     rows.append([label, "base", "0.00", f"{base_margin:.4f}"])
 
-with open(os.path.join(HERE, "sensitivity_margin_data.csv"), "w", newline="") as f:
+with open(os.path.join(HERE, "fig6_sensitivity_margin.csv"), "w", newline="") as f:
     w = csv.writer(f)
-    w.writerow(["case", "criterion", "delta", "margin"])
+    w.writerow(["# Figure 6 data: recommendation margin under +-0.05 perturbations of one active criterion weight."])
+    w.writerow(["# Computed by the decision engine, not measured; delta 0.00 is the unperturbed base."])
+    w.writerow(["figure", "case", "perturbed_criterion", "delta", "margin"])
     w.writerows(rows)
 
 plt.rcParams.update({

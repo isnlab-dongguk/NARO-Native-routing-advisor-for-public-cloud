@@ -14,7 +14,8 @@ VPC task carries the accent color, since it alone separates the
 configurations. Error caps show the SD of the total.
 """
 import os
-import openpyxl, statistics as st
+import csv as _csv
+import statistics as st
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -31,33 +32,25 @@ PNAME = ["Infrastructure provisioning", "Kubernetes setup", "CNI setup",
          "Routing setup"]
 COLOR = ["#9AA7B6", "#5A6B7E", "#0EB4FC", "#1B9E77"]
 
-wb = openpyxl.load_workbook("Exp_provisioning time.xlsx", data_only=True)
+# Raw per-repetition values (seconds) live in fig3_provisioning_raw.csv; see the
+# header of that file for the phase and set definitions.
+RAW = {}
+with open("fig3_provisioning_raw.csv") as _fh:
+    for _row in _csv.DictReader(r for r in _fh if not r.startswith("#")):
+        RAW.setdefault((_row["config"], _row["set"], _row["phase_id"]), {})[int(_row["run"])] = float(_row["value"])
 
-# GKE re-run (fig3-gke.csv, 2026-07-30) supersedes the alias-IP CLOUD sheet:
-# same layout — cols 1-3 = initial 4-worker reps, cols 6-8 = scale-up reps (ms).
-import csv as _csv
-GKE_ROWS = {}
-with open("fig3-gke.csv") as _fh:
-    for _row in _csv.reader(_fh):
-        if _row and _row[0].startswith("T"):
-            def _num(x):
-                try:
-                    return float(x)
-                except ValueError:
-                    return 0.0
-            GKE_ROWS[_row[0]] = [_row[0]] + [_num(x) for x in _row[1:]]
+SETNAME = {1: "initial_4node", 6: "scaleup_4to8node"}   # legacy column offsets
 
 def phase_stats(cfg, offs):
-    """Phase means and total mean/SD summed over the runs at column offsets
-    `offs` (repetitions paired by index for the SD of the sum)."""
-    rows = (GKE_ROWS if cfg == "CLOUD" else
-            {r[0]: r for r in wb[cfg].iter_rows(values_only=True)
-             if r[0] and str(r[0]).startswith("T")})
-    means = [sum(st.mean(rows[p][off + i] for i in range(3)) for off in offs) / 1000
+    """Phase means and total mean/SD over the three repetitions of the requested
+    set(s); repetitions are paired by index for the SD of the sum."""
+    name = LABEL[cfg]
+    sets = [SETNAME[o] for o in offs]
+    means = [sum(st.mean(RAW[(name, sn, p)][i] for i in (1, 2, 3)) for sn in sets)
              for p in PHASES]
     if MERGE_LAST_TWO:
         means = means[:3] + [means[3] + means[4]]
-    tot = [sum(rows["T0_to_T5"][off + i] for off in offs) / 1000 for i in range(3)]
+    tot = [sum(RAW[(name, sn, "T0_to_T5")][i] for sn in sets) for i in (1, 2, 3)]
     return means, st.mean(tot), st.stdev(tot)
 
 plt.rcParams.update({
