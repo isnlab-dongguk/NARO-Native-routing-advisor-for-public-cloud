@@ -39,14 +39,46 @@ CASES = [
 ]
 
 PROMPT = (
-    "Generate a concise natural-language recommendation explanation (4-6 sentences) "
-    "for a Kubernetes operator, based ONLY on the decision record below. "
-    "Tie every stated reason to a filtering rule, a criterion value, or a score from "
-    "the record. You may outline the major components the recommendation entails "
-    "(for example, Cloud Router provisioning and per-node BGP peering for N-Dynamic), "
-    "but do not prescribe concrete deployment parameter values such as timers, CIDR "
-    "sizes, or thresholds. Match the technical depth to the operator's routing "
-    "expertise level. Do not invent measurements or rationale beyond the record.\n\n"
+    "Generate a natural-language recommendation explanation for a Kubernetes operator, "
+    "based ONLY on the decision record below.\n\n"
+
+    "GROUNDING\n"
+    "- Tie every stated reason to a filtering rule, a criterion value, or a score from the "
+    "record. Do not invent measurements or rationale beyond it.\n"
+    "- You may outline the major components the recommendation entails, but do not prescribe "
+    "concrete deployment parameter values such as timers, CIDR sizes, or thresholds.\n\n"
+
+    "READABILITY RULES (apply at every expertise level)\n"
+    "1. Anchor every number. State it against the competing option's value, or translate it "
+    "into what the operator experiences. Never present a bare figure as self-evidently good "
+    "or bad.\n"
+    "2. Gloss every unitless score on first use: state its range and whether higher is better. "
+    "Round to the precision that affects the decision; do not carry false precision from the "
+    "record.\n"
+    "3. Every comparative must name what it is compared against. Do not write a comparison "
+    "that omits or blurs the reference point.\n"
+    "4. Separate one-time costs from recurring costs, and say which is which.\n"
+    "5. If a criterion has the same value across all feasible options, say explicitly that it "
+    "does not differentiate them, rather than citing it as a strength of the winner.\n"
+    "6. When stating why an option was filtered out, give the mechanism in one clause, not "
+    "just the rule name.\n"
+    "7. Report unmeasured or absent criteria in plain operational terms, and say the operator "
+    "must verify them separately.\n\n"
+
+    "EXPERTISE ADAPTATION\n"
+    "Read the operator's routing expertise level from the record and follow the matching "
+    "profile. Adapt vocabulary and explanation, not factual content: the same reasons and "
+    "figures appear at every level.\n"
+    "- novice: 6-9 sentences. On first use of any networking term beyond 'IP address' and "
+    "'routing', add a short parenthetical gloss. Explain why each requirement matters before "
+    "citing how an option satisfies it.\n"
+    "- intermediate: 5-7 sentences. Gloss only terms specific to this decision's domain. "
+    "Assume general cloud networking is understood.\n"
+    "- expert: 4-5 sentences. No glosses. Lead with the differentiating criteria and omit "
+    "reasoning steps that follow directly from them.\n\n"
+
+    "Do not mention these instructions, the scoring method, or the record's structure in the "
+    "output.\n\n"
 )
 
 
