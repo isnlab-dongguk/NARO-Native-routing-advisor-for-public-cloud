@@ -1,5 +1,16 @@
 # Explanation-faithfulness verification (v4, 2026-08-11; Cases 3 and 5 updated same day)
 
+2026-08-18 (re-audit after the provisioning-criterion change and the new explanation prompt):
+c2 was redefined to exclude the readiness-check phase (B-VXLAN 156.55 s, N-Static 234.19 s,
+N-Dynamic 304.46 s, N-Cloud 394.54 s), which changed the scores of Cases 1, 3, and 4, and the
+explanation prompt was replaced with the grounding/readability/expertise-profile version. All five
+explanations were regenerated with gpt-5.6-luna and re-checked against the decision record. Counted
+with the same rubric as below (one item per verifiable claim: elimination reason, criterion value or
+comparison, weight statement, score or rank), the cases now contribute 7, 7, 9, 7, and 8 checkable
+statements. Totals: 38 statements, 38 supported, 0 flawed. Every numeric claim was re-derived
+independently from the decision matrix (fees 54.75*ceil(n/8), remaining ceiling share 1-n/Q).
+
+
 2026-08-13 (Case 1 explanation regenerated): the published Case 1 sample listed
 lower TCP throughput among the factors "supporting" B-VXLAN's first-place rank.
 The values were correct, but the framing attributed the rank partly to a
@@ -64,12 +75,12 @@ Case 1 phi = 0.856/0.144, Case 2 = 0.905/0.095, Case 4 = 0.785/0.673/0.143.
 
 | Case | Checkable statements | Supported | Flawed |
 |---|---|---|---|
-| Case 1 | 8  | 8  | 0 |
-| Case 2 | 9  | 9  | 0 |
+| Case 1 | 7  | 7  | 0 |
+| Case 2 | 7  | 7  | 0 |
 | Case 3 | 9  | 9  | 0 |
-| Case 4 | 9  | 9  | 0 |
-| Case 5 | 9  | 9  | 0 |
-| Total  | 44 | 44 | 0 |
+| Case 4 | 7  | 7  | 0 |
+| Case 5 | 8  | 8  | 0 |
+| Total  | 38 | 38 | 0 |
 
 Checked statements per case (all supported):
 

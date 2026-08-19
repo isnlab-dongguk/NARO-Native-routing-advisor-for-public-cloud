@@ -19,14 +19,15 @@ CRITERIA_BENEFIT = [True, False, False, False, True]  # True = higher is better
 # measure 9.735-9.752 Gbps (spread < 0.2%, below noise), entered as equal.
 # Rows: B1, N1, N2, N3  (B2 excluded from recommendations)
 # Code-order columns: [tput, convergence, fee(query), provisioning, headroom(query)]
-# Provisioning time = mean of the measured initial 4-worker deployment and the
-# 4->8 scale-up time (Section 3.3): B1 (207.1+159.1)/2, N1 (643.7+201.4)/2,
-# N2 (282.7+239.5)/2, N3 (412.7+253.6)/2.
+# Provisioning time = mean of the measured initial 4-node deployment and the
+# 4->8 scale-up time, excluding the readiness-check phase (Section 3.4):
+# B1 (181.41+131.70)/2, N1 (617.66+171.42)/2, N2 (256.62+211.77)/2,
+# N3 (381.83+227.08)/2.
 DECISION_MATRIX: Dict[str, List[float]] = {
-    "B1": [8.64, 0.0, 0, 183.10, 0],
-    "N1": [9.74, 5.2, 0, 422.55, 0],
-    "N2": [9.74, 16.4, 0, 261.10, 0],
-    "N3": [9.74, 10.4, 0, 333.15, 0],
+    "B1": [8.64, 0.0, 0, 156.55, 0],
+    "N1": [9.74, 5.2, 0, 394.54, 0],
+    "N2": [9.74, 16.4, 0, 234.19, 0],
+    "N3": [9.74, 10.4, 0, 304.46, 0],
 }
 
 import math as _math

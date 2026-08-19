@@ -45,7 +45,7 @@ PROMPT = (
     "Read the operator's routing expertise level from the record and follow the matching "
     "profile. Adapt vocabulary and explanation, not factual content: the same reasons and "
     "figures appear at every level.\n"
-    "- novice: 6-9 sentences. On first use of any networking term beyond 'IP address' and "
+    "- beginner: 6-9 sentences. On first use of any networking term beyond 'IP address' and "
     "'routing', add a short parenthetical gloss. Explain why each requirement matters before "
     "citing how an option satisfies it.\n"
     "- intermediate: 5-7 sentences. Gloss only terms specific to this decision's domain. "
