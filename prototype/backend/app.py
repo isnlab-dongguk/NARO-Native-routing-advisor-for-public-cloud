@@ -43,6 +43,15 @@ def recommend_v2(body: pipeline_v2.OperatorInputV2):
         result = pipeline_v2.run(merged, body.form)
     except pipeline_v2.ClarificationNeeded as e:
         return {"clarification_needed": True, "question": e.question}
+    result["interpreted"] = {
+        "scale": merged.scale,
+        "transparency_required": merged.transparency_required,
+        "self_managed_required": merged.self_managed_required,
+        "budget_limit_usd": merged.budget_limit_usd,
+        "pod_renumbering": merged.pod_renumbering,
+        "stated_priority": merged.priority,
+        "routing_expertise": merged.routing_expertise,
+    }
     if not result.get("infeasible"):
         result["extracted"] = extracted.as_dict() if extracted else None
         if os.environ.get("GATEWAY_API_KEY"):
