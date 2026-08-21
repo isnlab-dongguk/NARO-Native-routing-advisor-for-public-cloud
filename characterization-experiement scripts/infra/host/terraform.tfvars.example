@@ -1,0 +1,44 @@
+# Copy this file to terraform.tfvars and fill in your own values:
+#   copy terraform.tfvars.example terraform.tfvars
+# terraform.tfvars is never committed: it holds your project id and key path.
+
+# --- required ----------------------------------------------------------------
+project_id      = "<GCP_PROJECT_ID>"
+network_name    = "<VPC_NAME>"            # its MTU must be 1500
+subnetwork_name = "<SUBNET_NAME>"         # in the region below
+experiment_name = "host"                 # must equal provision.ps1 -Mode
+
+# Linux account name. Start with a lowercase letter: an uppercase name can be
+# rejected by useradd and the guest agent then fails to create the account.
+ssh_user = "<SSH_USER>"
+
+# Passphrase-less OpenSSH key. ssh_private_key_path is derived by dropping
+# '.pub' unless it is set explicitly below.
+ssh_public_key_path = "<ABSOLUTE_PATH>/id_ed25519.pub"
+
+# Required by experiment 3: the control plane VM runs the timed gcloud commands
+# itself. The project IAM role must still be granted separately - see
+# README-exp3.md.
+service_account_email = "<PROJECT_NUMBER>-compute@developer.gserviceaccount.com"
+
+# --- optional (defaults live in variables.tf) --------------------------------
+# ssh_private_key_path = "<ABSOLUTE_PATH>/id_ed25519"
+# ssh_source_ranges    = ["<YOUR_PUBLIC_IP>/32"]   # restrict tcp/22
+# region               = "asia-northeast3"
+# zone                 = "asia-northeast3-a"
+# prefix               = "host"                   # override only if you must
+# machine_type         = "c2-standard-4"
+# min_cpu_platform     = "Intel Cascade Lake"
+# disk_size_gb         = 25
+# pod_cidr             = "10.244.0.0/16"
+# expected_network_mtu = 1500        # null skips the MTU preflight
+# expected_subnet_cidr = "10.0.0.0/16"
+# worker_count         = 2           # provision.ps1 -Nodes forces 2 or 6
+# source_image         = "projects/ubuntu-os-cloud/global/images/<EXACT_IMAGE>"
+
+# Kubernetes/Cilium are pinned to a combination the Cilium docs guarantee:
+# Cilium 1.19 covers Kubernetes 1.32~1.35 -> K8s 1.35.6 + Cilium 1.19.5.
+# kubernetes_minor_version = "v1.35"
+# kubernetes_apt_version   = "1.35.6-1.1"
+# cilium_cli_version       = "v0.19.5"
+# cilium_version           = "1.19.5"

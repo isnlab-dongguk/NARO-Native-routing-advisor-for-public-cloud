@@ -1,0 +1,42 @@
+# Copy this file to terraform.tfvars and fill in your own values:
+#   copy terraform.tfvars.example terraform.tfvars
+# terraform.tfvars is never committed: it holds your project id and key path.
+
+# --- required ----------------------------------------------------------------
+project_id      = "<GCP_PROJECT_ID>"
+network_name    = "<VPC_NAME>"
+subnetwork_name = "<SUBNET_NAME>"
+experiment_name = "cloud"                 # the cluster/prefix token stays 'cloud'
+ssh_user        = "<SSH_USER>"
+ssh_public_key_path = "<ABSOLUTE_PATH>/id_ed25519.pub"
+
+# Exact GKE creation version: pick a REGULAR-channel build offered in your zone
+# whose minor.patch matches the kubeadm pin (1.35.6). Check with:
+#   gcloud container get-server-config --zone <ZONE> --project <GCP_PROJECT_ID>
+gke_version = "1.35.6-gke.1641000"
+
+# Experiment 3 hybrid measurement: attaches the compute service account so the
+# ops VM (cloud-ops-0) can run gcloud (default scope cloud-platform). The same
+# SA goes on the node pools to keep the control variables aligned. Attaching it
+# is not enough on its own - the project IAM role must be granted separately,
+# see README-exp3.md.
+service_account_email = "<PROJECT_NUMBER>-compute@developer.gserviceaccount.com"
+
+# Measured T3 convergence and post-measurement T5 run on the ops VM, so it is
+# part of the measured apply (depends_on makes
+# it the last resource created, after the GKE nodes fixed their sub-blocks).
+create_ops_vm = true
+
+# --- optional (defaults live in variables.tf) --------------------------------
+# ssh_private_key_path = "<ABSOLUTE_PATH>/id_ed25519"
+# ssh_source_ranges    = ["<YOUR_PUBLIC_IP>/32"]
+# region               = "asia-northeast3"
+# zone                 = "asia-northeast3-a"
+# machine_type         = "c2-standard-4"
+# min_cpu_platform     = "Intel Cascade Lake"
+# disk_size_gb         = 25
+# pod_cidr             = "10.244.0.0/16"
+# services_cidr        = "10.245.0.0/20"
+# max_pods_per_node    = 110
+# ops_machine_type     = "c2-standard-4"
+# worker_count         = 2           # provision-gke.ps1 -Nodes forces 2 or 6

@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+# ops VM (cloud-ops-0) bootstrap: installs only the tools needed for the
+# orchestration/timing role the CP VM plays elsewhere. kubeadm and containerd are
+# not installed - this VM is not a cluster member.
+
+KUBERNETES_MINOR_VERSION="${kubernetes_minor_version}"
+KUBERNETES_APT_VERSION="${kubernetes_apt_version}"
+CILIUM_CLI_VERSION="${cilium_cli_version}"
+BOOTSTRAP_REVISION="${bootstrap_revision}"
+READY_MARKER="/var/lib/experiment-ops-bootstrap.done"
+
+if [[ -f "$READY_MARKER" ]] && [[ "$(tr -d '\r\n' <"$READY_MARKER")" == "$BOOTSTRAP_REVISION" ]]; then
+  exit 0
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gpg \
+  jq \
+  lsb-release \
+  docker.io
+
+# Docker is installed so the experiment 2 tool image can be built and pushed on
+# the ops VM itself. The attached compute SA (cloud-platform scope) authenticates
+# to Artifact Registry, so the whole flow can finish here without a local Docker.
+systemctl enable --now docker
+usermod -aG docker "${ssh_user}" || true
+
+install -m 0755 -d /etc/apt/keyrings
+
+# kubectl (pkgs.k8s.io, the same exact pin as the kubeadm experiments)
+if [[ ! -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg ]]; then
+  curl -fsSL "https://pkgs.k8s.io/core:/stable:/$KUBERNETES_MINOR_VERSION/deb/Release.key" \
+    | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+fi
+
+cat >/etc/apt/sources.list.d/kubernetes.list <<EOF_K8S_REPO
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_MINOR_VERSION/deb/ /
+EOF_K8S_REPO
+
+# gke-gcloud-auth-plugin: required for kubectl to authenticate to GKE.
+# The gcloud on Ubuntu GCE images is a snap, so 'gcloud components install' is
+# unavailable and the plugin comes from the Google Cloud CLI apt repository.
+if [[ ! -f /etc/apt/keyrings/cloud.google.gpg ]]; then
+  curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+    | gpg --dearmor -o /etc/apt/keyrings/cloud.google.gpg
+fi
+
+cat >/etc/apt/sources.list.d/google-cloud-sdk.list <<'EOF_GCLOUD_REPO'
+deb [signed-by=/etc/apt/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main
+EOF_GCLOUD_REPO
+
+apt-get update
+if [[ -n "$KUBERNETES_APT_VERSION" ]]; then
+  apt-mark unhold kubectl >/dev/null 2>&1 || true
+  apt-get install -y --allow-change-held-packages "kubectl=$KUBERNETES_APT_VERSION"
+else
+  apt-get install -y kubectl
+fi
+apt-mark hold kubectl
+apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+
+# helm (for experiment 2 script compatibility)
+if ! command -v helm >/dev/null 2>&1; then
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+fi
+
+# Cilium CLI exact pin (same as the control-plane branch of the CP bootstrap)
+CLI_ARCH=amd64
+if [[ "$(uname -m)" == "aarch64" ]]; then
+  CLI_ARCH=arm64
+fi
+
+curl -L --fail --remote-name-all \
+  "https://github.com/cilium/cilium-cli/releases/download/$CILIUM_CLI_VERSION/cilium-linux-$CLI_ARCH.tar.gz"{,.sha256sum}
+sha256sum --check "cilium-linux-$CLI_ARCH.tar.gz.sha256sum"
+tar xzvfC "cilium-linux-$CLI_ARCH.tar.gz" /usr/local/bin
+rm -f "cilium-linux-$CLI_ARCH.tar.gz" "cilium-linux-$CLI_ARCH.tar.gz.sha256sum"
+
+# Prepares the shared experiment 2/3 paths exactly as on the CP, so the scripts
+# are reused without a single path change.
+install -d -m 0755 -o root -g root /opt/experiment
+install -d -m 0755 -o root -g root /opt/experiment/scripts
+install -d -m 0755 -o root -g root /var/lib/experiment
+install -d -m 0755 -o root -g root /var/lib/experiment/results
+install -d -m 1777 "/var/lib/experiment/results/exp2"
+
+# Adds the shared script path to PATH for every SSH account (same rule as the CP)
+cat >/etc/profile.d/99-experiment-path.sh <<'EOF_PATH'
+case ":$PATH:" in
+  *:/opt/experiment/scripts:*) ;;
+  *) export PATH="$PATH:/opt/experiment/scripts" ;;
+esac
+EOF_PATH
+
+printf '%s\n' "$BOOTSTRAP_REVISION" >"$READY_MARKER"

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+ROLE="${role}"
+KUBERNETES_MINOR_VERSION="${kubernetes_minor_version}"
+KUBERNETES_APT_VERSION="${kubernetes_apt_version}"
+CILIUM_CLI_VERSION="${cilium_cli_version}"
+BOOTSTRAP_REVISION="${bootstrap_revision}"
+READY_MARKER="/var/lib/k8s-node-bootstrap.done"
+
+if [[ -f "$READY_MARKER" ]] && [[ "$(tr -d '\r\n' <"$READY_MARKER")" == "$BOOTSTRAP_REVISION" ]]; then
+  exit 0
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+
+cat >/etc/modules-load.d/k8s.conf <<'EOF_MODULES'
+overlay
+br_netfilter
+EOF_MODULES
+
+modprobe overlay
+modprobe br_netfilter
+
+cat >/etc/sysctl.d/99-kubernetes-cri.conf <<'EOF_SYSCTL'
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF_SYSCTL
+
+sysctl --system
+swapoff -a || true
+sed -i.bak '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+apt-get update
+apt-get install -y \
+  apt-transport-https \
+  ca-certificates \
+  conntrack \
+  curl \
+  ebtables \
+  ethtool \
+  gpg \
+  iproute2 \
+  iptables \
+  jq \
+  lsb-release \
+  socat
+
+apt-get install -y containerd
+mkdir -p /etc/containerd
+containerd config default >/etc/containerd/config.toml
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+systemctl enable --now containerd
+systemctl restart containerd
+
+install -m 0755 -d /etc/apt/keyrings
+if [[ ! -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg ]]; then
+  curl -fsSL "https://pkgs.k8s.io/core:/stable:/$KUBERNETES_MINOR_VERSION/deb/Release.key" \
+    | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+fi
+
+cat >/etc/apt/sources.list.d/kubernetes.list <<EOF_K8S_REPO
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_MINOR_VERSION/deb/ /
+EOF_K8S_REPO
+
+apt-get update
+if [[ -n "$KUBERNETES_APT_VERSION" ]]; then
+  apt-mark unhold kubelet kubeadm kubectl >/dev/null 2>&1 || true
+  apt-get install -y \
+    --allow-change-held-packages \
+    "kubelet=$KUBERNETES_APT_VERSION" \
+    "kubeadm=$KUBERNETES_APT_VERSION" \
+    "kubectl=$KUBERNETES_APT_VERSION"
+else
+  apt-get install -y kubelet kubeadm kubectl
+fi
+apt-mark hold kubelet kubeadm kubectl
+systemctl enable kubelet
+
+if [[ "$ROLE" == "control-plane" ]]; then
+  if ! command -v helm >/dev/null 2>&1; then
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  fi
+
+  CLI_ARCH=amd64
+  if [[ "$(uname -m)" == "aarch64" ]]; then
+    CLI_ARCH=arm64
+  fi
+
+  curl -L --fail --remote-name-all \
+    "https://github.com/cilium/cilium-cli/releases/download/$CILIUM_CLI_VERSION/cilium-linux-$CLI_ARCH.tar.gz"{,.sha256sum}
+  sha256sum --check "cilium-linux-$CLI_ARCH.tar.gz.sha256sum"
+  tar xzvfC "cilium-linux-$CLI_ARCH.tar.gz" /usr/local/bin
+  rm -f "cilium-linux-$CLI_ARCH.tar.gz" "cilium-linux-$CLI_ARCH.tar.gz.sha256sum"
+fi
+
+printf '%s\n' "$BOOTSTRAP_REVISION" >"$READY_MARKER"

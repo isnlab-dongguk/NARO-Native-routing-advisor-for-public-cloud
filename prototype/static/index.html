@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/static/naro-logo.png?v=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NARO — Native Routing Advisor</title>
-  <link rel="stylesheet" href="/static/style.css?v=11" />
+  <link rel="stylesheet" href="/static/style.css?v=22" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <span class="brand-mark">⬡</span>
-        <span class="brand-name">NARO</span>
+        <img class="brand-logo" src="/static/naro-logo.png?v=1" alt="NARO" />
         <span class="brand-sep"></span>
         <span class="brand-tagline">Native Routing Advisor for Public-Cloud Kubernetes</span>
       </div>
@@ -32,7 +32,7 @@
           <h2 class="card-title">Operator requirements</h2>
           <span class="pill">Structured form</span>
         </header>
-        <p class="card-sub">Every field of the input model can be entered here; leave a field untouched to leave it unstated.</p>
+        <p class="card-sub">Leave a field untouched to leave it unstated.</p>
 
         <div class="field">
           <label for="scale">Target cluster scale</label>
@@ -100,7 +100,7 @@
           <h2 class="card-title">Deployment request</h2>
           <span class="pill pill-muted">Optional</span>
         </header>
-        <p class="card-sub">Describe the deployment in natural language and the extractor fills the same fields above, shown with the recommendation for review.</p>
+        <p class="card-sub">Describe the deployment request in text.</p>
 
         <div class="field">
           <textarea id="freeform-text" name="freeform_text" rows="5" autocomplete="off"
@@ -110,7 +110,6 @@
         <button type="button" id="submit-btn" class="btn-primary">
           Get recommendation
         </button>
-        <p class="field-hint centered">Free-form extraction needs <code>GATEWAY_API_KEY</code>; a form-only request runs without it.</p>
       </section>
 
     </aside>
@@ -172,6 +171,6 @@
     </div>
   </main>
 
-  <script src="/static/app.js?v=11"></script>
+  <script src="/static/app.js?v=22"></script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+# Terraform local working data and saved plans
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Per-user Terraform inputs can contain project IDs, account names, and paths.
+**/*.tfvars
+**/*.tfvars.json
+
+# Generated experiment output and local routing state
+/results/
+**/.native-routing-t4-*.json
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

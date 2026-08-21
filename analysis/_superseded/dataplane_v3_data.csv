@@ -1,9 +1,0 @@
-# Data-plane v3 (GKE round, 2026-07-29): single client/server pod pair on
-# different worker nodes; averages of three runs. N-Cloud = real GKE cluster
-# (VPC-native alias IP, Dataplane V2); CPU shares in percent.
-config,tcp_gbps,snd_user_pct,snd_system_pct,snd_iowait_pct,snd_softirq_pct,rcv_user_pct,rcv_system_pct,rcv_iowait_pct,rcv_softirq_pct
-B-Host,9.889124,0.678,7.356,0.002,3.118,1.058,11.190,0.004,14.018
-B-VXLAN,8.638217,0.818,10.066,0.008,35.796,1.060,8.122,0.004,42.196
-N-Static,9.751752,0.752,7.590,0.002,4.660,1.018,8.508,0.004,17.940
-N-Dynamic,9.735273,0.806,11.046,0.002,5.502,1.016,5.482,0.006,15.810
-N-Cloud,9.740000,1.430,8.886,0.002,2.186,2.610,11.458,0.006,8.536
