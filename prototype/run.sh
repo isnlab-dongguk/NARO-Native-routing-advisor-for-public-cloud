@@ -18,5 +18,5 @@ if ! python3 -c "import fastapi" &>/dev/null; then
   pip3 install -q -r requirements.txt
 fi
 
-echo "Starting NARO at http://${HOST}:${PORT}"
+echo "Starting NaRo at http://${HOST}:${PORT}"
 uvicorn backend.app:app --host "$HOST" --port "$PORT" --reload

@@ -15,7 +15,7 @@ import extract_v2
 import explain_v2
 import pipeline_v2
 
-app = FastAPI(title="NARO (NAtive ROuting advisor)", version="1.0.0")
+app = FastAPI(title="NaRo (Native Routing advisor)", version="1.0.0")
 
 STATIC_DIR = Path(__file__).parent.parent / "static"
 

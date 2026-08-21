@@ -1,4 +1,4 @@
-# NARO: NAtive ROuting Advisor for Public-Cloud Kubernetes
+# NaRo: Native Routing Advisor for Public-Cloud Kubernetes
 
 Artifact for the paper **"NaRo: An LLM-Assisted Framework for
 Characterization-Grounded Native Routing Selection in Public-Cloud
@@ -6,7 +6,7 @@ Kubernetes"** (under submission).
 
 Pod CIDRs that are not drawn from the cloud provider's subnet address space are
 invisible to the provider-managed forwarding plane, so a Kubernetes cluster must
-either encapsulate pod traffic or register its pod routes with the cloud. NARO
+either encapsulate pod traffic or register its pod routes with the cloud. NaRo
 turns that choice into an explicit procedure: it removes configurations that
 violate the operator's mandatory constraints, ranks the rest with TOPSIS over a
 decision matrix filled from measurements, and uses an LLM only as a

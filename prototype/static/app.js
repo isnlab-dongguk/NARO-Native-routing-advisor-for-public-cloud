@@ -211,7 +211,7 @@ function showBox(msg, clarify) {
 
 function showError(msg) { showBox(`Error: ${msg}`, false); }
 
-// Missing or conflicting information: NARO asks instead of guessing (Section 4.2/4.3)
+// Missing or conflicting information: NaRo asks instead of guessing (Section 4.2/4.3)
 function showClarification(question) { showBox(`Clarification needed: ${question}`, true); }
 
 // Empty feasible set: report the conflict and the relaxation options (Section 4.3)
