@@ -91,9 +91,9 @@ function renderResult(data) {
   document.getElementById('rec-desc').textContent = data.description;
 
   const reqSection = document.getElementById('extracted-req-section');
-  if (data.extracted) {
+  if (data.interpreted) {
     reqSection.style.display = '';
-    renderExtracted(data.extracted);
+    renderInterpreted(data.interpreted);
   } else {
     reqSection.style.display = 'none';
   }
@@ -130,12 +130,12 @@ function renderResult(data) {
   showResultContent();
 }
 
-function renderExtracted(x) {
+function renderInterpreted(x) {
   const dash = (v) => (v && v !== 'unspecified' ? v.replace(/_/g, '-') : 'Not stated');
   const chips = [
     ['Scale', x.scale != null ? `${x.scale} nodes` : 'Not stated'],
-    ['Transparency', x.transparency_required ? 'Required' : 'Not required'],
-    ['Self-managed K8s', x.self_managed_required ? 'Required' : 'Not required'],
+    ['Transparency', x.transparency_required ? 'Required' : 'Not stated'],
+    ['Self-managed K8s', x.self_managed_required ? 'Required' : 'Not stated'],
     ['Budget limit', x.budget_limit_usd != null ? `$${x.budget_limit_usd}/mo` : 'None'],
     ['Adaptability', dash(x.pod_renumbering)],
     ['Priority', dash(x.stated_priority)],
