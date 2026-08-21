@@ -1,84 +1,105 @@
 # NARO: NAtive ROuting Advisor for Public-Cloud Kubernetes
 
-Artifact for the paper **"Understanding and Selecting Native Routing for Kubernetes in Public Clouds: Empirical Characterization and Design of an LLM-Assisted Decision-Support Framework"** (under submission).
+Artifact for the paper **"NaRo: An LLM-Assisted Framework for
+Characterization-Grounded Native Routing Selection in Public-Cloud
+Kubernetes"** (under submission).
 
-NARO is a decision-support framework that recommends a pod-networking configuration
-(VXLAN overlay, static VPC routes, dynamic BGP via a cloud-managed router, or
-provider-managed native routing) for a Kubernetes deployment on a public cloud.
-It filters infeasible configurations against the operator's mandatory constraints,
-ranks the remainder with TOPSIS over a measurement-grounded decision matrix, and
-uses an LLM only as a natural-language interface for requirement extraction and
-explanation generation.
+Pod CIDRs that are not drawn from the cloud provider's subnet address space are
+invisible to the provider-managed forwarding plane, so a Kubernetes cluster must
+either encapsulate pod traffic or register its pod routes with the cloud. NARO
+turns that choice into an explicit procedure: it removes configurations that
+violate the operator's mandatory constraints, ranks the rest with TOPSIS over a
+decision matrix filled from measurements, and uses an LLM only as a
+natural-language interface, never as the decision maker.
+
+The repository holds the two halves of the artifact: the prototype that
+implements the framework, and the scripts that produced the measurements behind
+its decision matrix.
 
 ## Repository layout
 
 ```
-prototype/            Web prototype (FastAPI backend + single-page frontend)
-  backend/            Decision engine (pipeline_v2.py = the paper-faithful path,
-                      served at POST /api/v2/recommend), LLM extraction/explanation
-  static/             Browser UI
-analysis/             Measurement data (CSV) and figure/analysis scripts
-  llm_benchmark/      LLM extraction benchmark (50 scenarios) and its results
-figure/               Output directory for the figure scripts (generated, not tracked)
+prototype/                            Web prototype (FastAPI + single-page frontend)
+  backend/                            Decision engine and LLM interface
+  static/                             Browser UI
+characterization-experiement scripts/ Measurement harness for the five configurations
+  infra/<method>/                     Terraform root, one per configuration
+  exp2/, exp3/                        Experiment engines and wrappers
+  gke/                                GKE variants of experiments 2 and 3
 ```
 
-## Measurement data
+## Configurations
 
-All measurements were taken on Google Cloud (`asia-northeast3`) with Cilium;
-values are from three repetitions per configuration and scenario (see the paper
-for the full methodology).
+The same five configurations appear throughout the paper, the prototype, and the
+measurement scripts.
 
-| File | Contents |
-|---|---|
-| `analysis/dataplane_v3_data.csv` | TCP throughput and CPU shares (3-run means) |
-| `analysis/convergence_fig4_data.csv` | Route convergence time per scenario (3-run means) |
-| `analysis/routing_convergence.xlsx` | Raw convergence measurements, per repetition |
-| `analysis/provisioning_raw.xlsx` | Raw provisioning measurements, per repetition |
-| `analysis/provisioning_time_raw.csv` | Deployment/scale-up phase times, per repetition |
-| `analysis/provisioning_time_summary.csv` | The same, as mean and SD (n = 3) |
-| `analysis/provisioning_fig3_data.csv`, `analysis/fig3-gke.csv` | Provisioning phase data used by Figure 3 (GKE values in `fig3-gke.csv`) |
-| `analysis/cost_model_data.csv` | Monthly configuration-specific fee vs. cluster size (list prices) |
-| `analysis/sensitivity_margin_data.csv` | Recommendation margins under weight perturbations (`CS1..CS5` = paper Cases 1–5) |
-| `analysis/llm_benchmark/scenarios_v2.json` | 50 benchmark scenarios with ground truth |
-| `analysis/llm_benchmark/results_v2/` | Raw extraction runs, scores, generated explanations, faithfulness verification |
-| `analysis/llm_benchmark/direct_decision/` | Direct LLM-decision comparison for Case 5 (scripts, raw runs, README) |
+| Configuration | Routing mechanism | Script token |
+|---|---|---|
+| B-Host | Host network, no pod overlay | `host` |
+| B-VXLAN | Cilium VXLAN overlay | `vxlan` |
+| N-Static | Static VPC routes | `static` |
+| N-Dynamic | BGP through a cloud-managed router | `dynamic` |
+| N-Cloud | Provider-managed native routing (GKE alias IP) | `cloud` |
 
-## Reproducing the paper's numbers and figures
-
-The decision engine is deterministic and needs no LLM access; every score and
-elimination in the paper reproduces from the operator input alone.
-
-```bash
-pip install -r prototype/requirements.txt matplotlib numpy
-cd analysis
-python3 regen_eval.py         # Case-study phi scores, eliminations (Tables 8-9, Appendix D)
-python3 dataplane_fig.py      # Figure 2
-python3 provisioning_fig.py   # Figure 3
-python3 convergence_fig.py    # Figure 4
-python3 cost_model.py         # Figure 5
-python3 sensitivity_fig.py    # Figure 7 (runs the engine per perturbation)
-python3 llm_eval_fig.py       # Figure 8 (from stored benchmark results)
-```
-
-Re-running the LLM benchmark itself (`analysis/llm_benchmark/run_benchmark_v2.py`,
-then `score_benchmark_v2.py`) requires API access; see below.
-
-## Running the prototype
+## Prototype
 
 ```bash
 cd prototype
-pip install -r requirements.txt
-cp .env.example .env          # optional: fill in for free-form input + explanations
-cd backend && uvicorn app:app --port 8000
+cp .env.example .env      # optional; see below
+./run.sh
 ```
 
-Open `http://localhost:8000`. The structured form works fully offline;
-the free-form request and the generated explanation call an OpenAI-compatible
-LLM endpoint configured through `prototype/.env` (`LLM_BASE_URL`,
-`GATEWAY_API_KEY`, `LLM_MODEL`).
+Open `http://localhost:8000`. `run.sh` loads `.env`, installs the dependencies in
+`requirements.txt` if they are missing, and starts uvicorn. `HOST` and `PORT`
+override the defaults.
+
+The structured form runs fully offline and needs no API key. Free-form input and
+the generated explanation call an OpenAI-compatible endpoint configured through
+`.env` (`GATEWAY_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`); without a key the server
+still starts and `GET /api/health` reports `llm_enabled: false`.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v2/recommend` | Recommendation from a filled form, free-form text, or both |
+| `GET /api/configs` | The candidate configurations and their descriptions |
+| `GET /api/health` | Liveness and whether LLM access is configured |
+
+Inside `backend/`, `pipeline_v2.py` is the decision path described in the paper:
+it merges the form with any extracted fields, applies the feasibility rules,
+drops criteria that no longer separate the survivors, renormalizes the weights,
+and ranks with TOPSIS. `config.py` holds the decision matrix, the criterion
+definitions, and the three weight presets (cost-first, balanced,
+performance-first). `extract_v2.py` and `explain_v2.py` hold the two LLM prompts,
+and `llm.py` the client. Requirement extraction is constrained by function
+calling, so the model can only fill declared fields with declared values.
+
+## Characterization experiments
+
+`characterization-experiement scripts/` provisions each configuration on Google
+Cloud and measures it. Three experiments run in order, at 4 nodes and again at 8.
+
+| Experiment | Measures | Guide |
+|---|---|---|
+| 1 | Provisioning wall-clock time, per phase | `README-exp1.md` |
+| 2 | TCP/UDP throughput, CPU shares, TCP_RR latency | `README-exp2.md` |
+| 3 | Route convergence time | `README-exp3.md` |
+
+Provisioning and teardown are driven from PowerShell (`provision.ps1`,
+`provision-gke.ps1`, `destroy.ps1`, `destroy-gke.ps1`), the in-cluster benchmarks
+from bash. The `check-*.ps1` scripts verify quota, guard the Terraform plan, and
+record control variables so repetitions stay comparable. `test-new-scripts.ps1`
+is a smoke test that touches no cloud resources.
+
+Running them needs Windows PowerShell 5.1, Terraform, the Google Cloud CLI,
+Windows OpenSSH, and a running Docker daemon for the experiment 2 tool image,
+plus a `terraform.tfvars` per configuration copied from the `.example` beside it.
+`characterization-experiement scripts/README.md` documents the setup in full.
+
+Measurement output is written to `results/` and is not tracked here: it carries
+project identifiers, node names, and Terraform plans specific to the account that
+produced it. The paper reports the values derived from those runs.
 
 ## License
 
-Code is released under the MIT License (see `LICENSE`).
-The measurement data (`analysis/*.csv`, `analysis/llm_benchmark/`) may be reused
-under CC BY 4.0 with citation of the paper.
+Code is released under the MIT License (see `LICENSE`). Measurement data derived
+from these scripts may be reused under CC BY 4.0 with citation of the paper.
